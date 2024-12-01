@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1090257390663",
+    "project_id": "collab-app-ca3fa",
+    "storage_bucket": "collab-app-ca3fa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1090257390663:android:9c712ea4905dff3e957562",
+        "android_client_info": {
+          "package_name": "com.example.collab_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCV7Di_B7oa3ErlxIyMcg-wm0-4oEiWaYw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
