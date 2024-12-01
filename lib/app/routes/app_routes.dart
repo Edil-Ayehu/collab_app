@@ -6,6 +6,8 @@ abstract class Routes {
   static const auth = '/auth';
   static const dashboard = '/dashboard';
   static const projects = '/projects';
+  static const projectDetails = '/project/:id';
   static const tasks = '/tasks';
+  static const taskDetails = '/task/:id';
   static const settings = '/settings';
 } 

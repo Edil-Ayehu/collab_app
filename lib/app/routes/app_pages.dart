@@ -5,8 +5,12 @@ import '../modules/dashboard/bindings/dashboard_binding.dart';
 import '../modules/dashboard/views/dashboard_view.dart';
 import '../modules/projects/bindings/project_binding.dart';
 import '../modules/projects/views/project_view.dart';
+import '../modules/projects/views/project_details_view.dart';
+import '../modules/projects/controllers/project_details_controller.dart';
 import '../modules/tasks/bindings/task_binding.dart';
 import '../modules/tasks/views/task_view.dart';
+import '../modules/tasks/views/task_details_view.dart';
+import '../modules/tasks/controllers/task_details_controller.dart';
 
 part 'app_routes.dart';
 
@@ -32,9 +36,23 @@ class AppPages {
       binding: ProjectBinding(),
     ),
     GetPage(
+      name: Routes.projectDetails,
+      page: () => const ProjectDetailsView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut(() => ProjectDetailsController());
+      }),
+    ),
+    GetPage(
       name: Routes.tasks,
       page: () => const TaskView(),
       binding: TaskBinding(),
+    ),
+    GetPage(
+      name: Routes.taskDetails,
+      page: () => const TaskDetailsView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut(() => TaskDetailsController());
+      }),
     ),
   ];
 } 
