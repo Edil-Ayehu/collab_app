@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
-import '../../../routes/app_pages.dart';
 
-class AuthView extends GetView<AuthController> {
-  const AuthView({super.key});
+class RegisterView extends GetView<AuthController> {
+  const RegisterView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,21 +13,26 @@ class AuthView extends GetView<AuthController> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Welcome to Collab App',
+                'Create Account',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 48),
               TextField(
                 controller: controller.emailController,
                 decoration: const InputDecoration(
                   labelText: 'Email',
                   hintText: 'Enter your email',
+                  prefixIcon: Icon(Icons.email),
+                  border: OutlineInputBorder(),
                 ),
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
               TextField(
@@ -36,18 +40,26 @@ class AuthView extends GetView<AuthController> {
                 decoration: const InputDecoration(
                   labelText: 'Password',
                   hintText: 'Enter your password',
+                  prefixIcon: Icon(Icons.lock),
+                  border: OutlineInputBorder(),
                 ),
                 obscureText: true,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: controller.signIn,
-                child: const Text('Sign In'),
+                onPressed: controller.signUp,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text(
+                  'Sign Up',
+                  style: TextStyle(fontSize: 16),
+                ),
               ),
               const SizedBox(height: 16),
               TextButton(
-                onPressed: () => Get.toNamed(Routes.register),
-                child: const Text('Don\'t have an account? Sign Up'),
+                onPressed: () => Get.back(),
+                child: const Text('Already have an account? Sign In'),
               ),
             ],
           ),

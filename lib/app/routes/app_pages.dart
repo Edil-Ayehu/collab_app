@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../modules/auth/bindings/auth_binding.dart';
 import '../modules/auth/views/auth_view.dart';
+import '../modules/auth/views/register_view.dart';
 import '../modules/dashboard/bindings/dashboard_binding.dart';
 import '../modules/dashboard/views/dashboard_view.dart';
 import '../modules/projects/bindings/project_binding.dart';
@@ -23,6 +24,11 @@ class AppPages {
     GetPage(
       name: Routes.auth,
       page: () => const AuthView(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: Routes.register,
+      page: () => const RegisterView(),
       binding: AuthBinding(),
     ),
     GetPage(
