@@ -31,9 +31,14 @@ class ProjectDetailsController extends GetxController {
   final taskDescriptionController = TextEditingController();
   final selectedTaskDueDate = DateTime.now().obs;
 
+  // Add new variables
+  final selectedRole = 'member'.obs;
+  final isAdmin = false.obs;
+
   @override
   void onInit() {
     super.onInit();
+    checkAdminStatus();
     final projectId = Get.parameters['id'];
     if (projectId != null) {
       loadProject(projectId);
@@ -90,23 +95,46 @@ class ProjectDetailsController extends GetxController {
   Future<void> loadMembers() async {
     try {
       members.clear();
-      for (final memberId in project.value?.members ?? []) {
-        final userDoc =
-            await _firestore.collection('users').doc(memberId).get();
-        if (userDoc.exists) {
+      final membersList = project.value?.members ?? [];
+      final creatorId = project.value?.createdBy;
+      
+      // Load creator first
+      if (creatorId != null) {
+        final creatorDoc = await _firestore.collection('users').doc(creatorId).get();
+        if (creatorDoc.exists) {
           members.add({
-            'uid': memberId,
-            'email': userDoc.data()?['email'] ?? '',
-            'name': userDoc.data()?['name'] ?? '',
+            'uid': creatorId,
+            'email': creatorDoc.data()?['email'] ?? '',
+            'name': creatorDoc.data()?['name'] ?? '',
+            'role': 'creator',  // Special role for creator
+            'availabilityStatus': creatorDoc.data()?['availabilityStatus'] ?? 'available',
+            'taskLimit': creatorDoc.data()?['taskLimit'] ?? 5,
+            'assignedTasks': creatorDoc.data()?['assignedTasks'] ?? 0,
+            'contributions': creatorDoc.data()?['contributions'] ?? {},
           });
         }
       }
+
+      // Load other members
+      for (final memberId in membersList) {
+        if (memberId != creatorId) {  // Skip creator as they're already added
+          final userDoc = await _firestore.collection('users').doc(memberId).get();
+          if (userDoc.exists) {
+            members.add({
+              'uid': memberId,
+              'email': userDoc.data()?['email'] ?? '',
+              'name': userDoc.data()?['name'] ?? '',
+              'role': userDoc.data()?['role'] ?? 'member',
+              'availabilityStatus': userDoc.data()?['availabilityStatus'] ?? 'available',
+              'taskLimit': userDoc.data()?['taskLimit'] ?? 5,
+              'assignedTasks': userDoc.data()?['assignedTasks'] ?? 0,
+              'contributions': userDoc.data()?['contributions'] ?? {},
+            });
+          }
+        }
+      }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to load members',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Error', 'Failed to load members');
     }
   }
 
@@ -114,11 +142,12 @@ class ProjectDetailsController extends GetxController {
     if (filter != null) {
       selectedFilter.value = filter;
       taskFilter.value = filter;
-    
+
       if (filter == 'all') {
         filteredTasks.value = tasks;
       } else {
-        filteredTasks.value = tasks.where((task) => task.status == filter).toList();
+        filteredTasks.value =
+            tasks.where((task) => task.status == filter).toList();
       }
     }
   }
@@ -161,35 +190,40 @@ class ProjectDetailsController extends GetxController {
           .get();
 
       if (userQuery.docs.isEmpty) {
-        Get.snackbar(
-          'Error',
-          'User not found',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        Get.snackbar('Error', 'User not found');
         return;
       }
 
       final userId = userQuery.docs.first.id;
       final projectId = project.value?.id;
+      
+      // Check if user is the creator
+      if (userId == project.value?.createdBy) {
+        Get.snackbar('Error', 'User is already the project creator');
+        return;
+      }
+
       if (projectId == null) return;
 
       await _firestore.collection('projects').doc(projectId).update({
         'members': FieldValue.arrayUnion([userId]),
       });
 
-      await loadProject(projectId);
+      await _firestore.collection('users').doc(userId).update({
+        'role': selectedRole.value,
+        'taskLimit': 5,
+        'assignedTasks': 0,
+        'contributions': {
+          'completed_tasks': 0,
+          'comments': 0,
+        },
+      });
 
-      Get.snackbar(
-        'Success',
-        'Member added successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      emailController.clear();
+      await loadMembers();
+      Get.snackbar('Success', 'Member added successfully');
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to add member',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Error', 'Failed to add member');
     }
   }
 
@@ -364,6 +398,47 @@ class ProjectDetailsController extends GetxController {
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> checkAdminStatus() async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        final userDoc =
+            await _firestore.collection('users').doc(currentUser.uid).get();
+        final userRole = userDoc.data()?['role'] as String?;
+        isAdmin.value = userRole == 'admin';
+      } else {
+        isAdmin.value = false;
+      }
+    } catch (e) {
+      isAdmin.value = false;
+      print('Error checking admin status: $e');
+    }
+  }
+
+  Future<void> updateMemberRole(String memberId, String newRole) async {
+    try {
+      await _firestore.collection('users').doc(memberId).update({
+        'role': newRole,
+      });
+      await loadMembers();
+      Get.snackbar('Success', 'Member role updated');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to update member role');
+    }
+  }
+
+  Future<void> updateMemberTaskLimit(String memberId, int newLimit) async {
+    try {
+      await _firestore.collection('users').doc(memberId).update({
+        'taskLimit': newLimit,
+      });
+      await loadMembers();
+      Get.snackbar('Success', 'Task limit updated');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to update task limit');
     }
   }
 }

@@ -399,75 +399,174 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
     );
   }
 
-  Future<void> _showMembersDialog(BuildContext context) async {
+  Future<void> _showMembersDialog(BuildContext context) {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Project Members'),
+        title: const Text('Team Members'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: SizedBox(
           width: double.maxFinite,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: controller.emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Add member by email',
-                  suffixIcon: Icon(Icons.person_add_rounded),
-                ),
-              ),
+              _buildAddMemberSection(),
               const SizedBox(height: 16),
-              Flexible(
-                child: Obx(() => ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: controller.members.length,
-                      itemBuilder: (context, index) {
-                        final member = controller.members[index];
-                        return ListTile(
-                          leading: const CircleAvatar(
-                            child: Icon(Icons.person_rounded),
-                          ),
-                          title: Text(member['email'] ?? ''),
-                          trailing: IconButton(
-                            icon:
-                                const Icon(Icons.remove_circle_outline_rounded),
-                            onPressed: () => controller
-                                .removeMember(member['uid'] as String),
-                          ),
-                        );
-                      },
-                    )),
-              ),
+              _buildMembersList(),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Close'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              controller.addMember();
-              controller.emailController.clear();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.teal,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 12,
+      ),
+    );
+  }
+
+  Widget _buildAddMemberSection() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller.emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Add member by email',
+                ),
               ),
             ),
-            child: const Text('Add Member'),
-          ),
+            const SizedBox(width: 8),
+            DropdownButton<String>(
+              value: controller.selectedRole.value,
+              items: ['admin', 'member', 'viewer']
+                  .map((role) => DropdownMenuItem(
+                        value: role,
+                        child: Text(role.capitalize!),
+                      ))
+                  .toList(),
+              onChanged: (value) => controller.selectedRole.value = value!,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ElevatedButton(
+          onPressed: controller.addMember,
+          child: const Text('Add Member'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMembersList() {
+    return Flexible(
+      child: Obx(() => ListView.builder(
+            shrinkWrap: true,
+            itemCount: controller.members.length,
+            itemBuilder: (context, index) {
+              final member = controller.members[index];
+              return _buildMemberCard(member);
+            },
+          )),
+    );
+  }
+
+  Widget _buildMemberCard(Map<String, dynamic> member) {
+    final isCreator = member['role'] == 'creator';
+
+    return Card(
+      child: ExpansionTile(
+        leading: CircleAvatar(
+          backgroundColor: _getAvailabilityColor(
+              member['availabilityStatus']?.toString() ?? 'unavailable'),
+          child: Icon(isCreator ? Icons.star : Icons.person),
+        ),
+        title: Text(
+          '${member['name']?.toString() ?? member['email']?.toString() ?? 'Unknown User'}'
+          '${isCreator ? ' (Creator)' : ''}',
+        ),
+        subtitle: Text((member['role']?.toString() ?? 'member').capitalize!),
+        children: [
+          _buildMemberStats(member),
+          if (!isCreator) // Don't show member actions for creator
+            Obx(() => controller.isAdmin.value
+                ? _buildMemberActions(member)
+                : const SizedBox()),
         ],
       ),
     );
+  }
+
+  Widget _buildMemberStats(Map<String, dynamic> member) {
+    final contributions =
+        member['contributions'] as Map<String, dynamic>? ?? {};
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildStatRow(
+              'Assigned Tasks', (member['assignedTasks']?.toString() ?? '0')),
+          _buildStatRow('Completed Tasks',
+              (contributions['completed_tasks']?.toString() ?? '0')),
+          _buildStatRow(
+              'Comments', (contributions['comments']?.toString() ?? '0')),
+          _buildStatRow('Task Limit', (member['taskLimit']?.toString() ?? '5')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 16),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMemberActions(Map<String, dynamic> member) {
+    final uid = member['uid']?.toString();
+    if (uid == null) return const SizedBox();
+
+    return ListTile(
+      leading: IconButton(
+        icon: const Icon(Icons.delete_rounded, color: Colors.red),
+        onPressed: () => controller.removeMember(uid),
+      ),
+      trailing: DropdownButton<String>(
+        value: member['role']?.toString() ?? 'member',
+        items: ['admin', 'member', 'viewer']
+            .map((role) => DropdownMenuItem(
+                  value: role,
+                  child: Text(role.capitalize!),
+                ))
+            .toList(),
+        onChanged: (newRole) {
+          if (newRole != null) {
+            controller.updateMemberRole(uid, newRole);
+          }
+        },
+      ),
+    );
+  }
+
+  Color _getAvailabilityColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'available':
+        return Colors.green;
+      case 'busy':
+        return Colors.red;
+      case 'away':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
   }
 
   void _showTaskOptions(Task task) {

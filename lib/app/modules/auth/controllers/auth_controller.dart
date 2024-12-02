@@ -74,7 +74,11 @@ class AuthController extends GetxController {
         email: emailController.text.trim(),
         name: nameController.text.trim(),
         phone: phoneController.text.trim(),
-        createdAt: DateTime.now(),
+        role: 'member',
+        availabilityStatus: 'available',
+        taskLimit: 5,
+        assignedTasks: 0,
+        contributions: {},
       );
 
       await _firestore

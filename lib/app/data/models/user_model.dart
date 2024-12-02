@@ -5,16 +5,22 @@ class UserModel {
   final String email;
   final String name;
   final String phone;
-  final DateTime createdAt;
-  final String? photoUrl;
+  final String role;
+  final String availabilityStatus;
+  final int taskLimit;
+  final int assignedTasks;
+  final Map<String, int> contributions;
 
   UserModel({
     required this.id,
     required this.email,
     required this.name,
     required this.phone,
-    required this.createdAt,
-    this.photoUrl,
+    required this.role,
+    required this.availabilityStatus,
+    required this.taskLimit,
+    required this.assignedTasks,
+    required this.contributions,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -22,8 +28,11 @@ class UserModel {
       'email': email,
       'name': name,
       'phone': phone,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'photoUrl': photoUrl,
+      'role': role,
+      'availabilityStatus': availabilityStatus,
+      'taskLimit': taskLimit,
+      'assignedTasks': assignedTasks,
+      'contributions': contributions,
     };
   }
 
@@ -34,8 +43,11 @@ class UserModel {
       email: data['email'] ?? '',
       name: data['name'] ?? '',
       phone: data['phone'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      photoUrl: data['photoUrl'],
+      role: data['role'] ?? 'member',
+      availabilityStatus: data['availabilityStatus'] ?? 'available',
+      taskLimit: data['taskLimit'] ?? 5,
+      assignedTasks: data['assignedTasks'] ?? 0,
+      contributions: Map<String, int>.from(data['contributions'] ?? {}),
     );
   }
 } 
