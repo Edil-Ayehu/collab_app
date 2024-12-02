@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../controllers/dashboard_controller.dart';
 import '../../projects/controllers/project_controller.dart';
 import '../../tasks/controllers/task_controller.dart';
-import 'package:intl/intl.dart';
 
 class OverviewView extends GetView<DashboardController> {
   const OverviewView({super.key});
