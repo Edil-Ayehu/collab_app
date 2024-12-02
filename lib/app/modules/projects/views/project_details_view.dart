@@ -55,7 +55,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
     return Card(
       margin: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 0,
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -69,6 +69,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.teal,
                   ),
                 ),
                 DropdownButton<String>(
@@ -105,12 +106,14 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         project.description,
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(
+                            fontSize: 16, color: Colors.black54),
                       ),
                     ],
                   ),
@@ -163,15 +166,58 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
           ],
         ),
         const SizedBox(height: 16),
-        Obx(() => ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: controller.filteredTasks.length,
-              itemBuilder: (context, index) {
-                final task = controller.filteredTasks[index];
-                return _buildTaskCard(task);
-              },
-            )),
+        Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (controller.filteredTasks.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.task_rounded,
+                      size: 48,
+                      color: Colors.grey.shade300,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      controller.selectedFilter.value == 'all'
+                          ? 'No tasks found'
+                          : 'No ${controller.selectedFilter.value.replaceAll('_', ' ')} tasks',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      controller.selectedFilter.value == 'all'
+                          ? 'Create a new task to get started'
+                          : 'Try selecting a different filter',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: controller.filteredTasks.length,
+            itemBuilder: (context, index) {
+              final task = controller.filteredTasks[index];
+              return _buildTaskCard(task);
+            },
+          );
+        }),
       ],
     );
   }
@@ -244,7 +290,8 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
       child: DropdownButtonHideUnderline(
         child: Obx(() => DropdownButton<String>(
               value: controller.selectedFilter.value,
-              icon: Icon(Icons.filter_list_rounded, color: Colors.grey.shade600),
+              icon:
+                  Icon(Icons.filter_list_rounded, color: Colors.grey.shade600),
               style: TextStyle(color: Colors.grey.shade800, fontSize: 14),
               isDense: true,
               items: [
@@ -256,7 +303,9 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(
-                    value == 'all' ? 'All Tasks' : value.replaceAll('_', ' ').capitalize!,
+                    value == 'all'
+                        ? 'All Tasks'
+                        : value.replaceAll('_', ' ').capitalize!,
                   ),
                 );
               }).toList(),
