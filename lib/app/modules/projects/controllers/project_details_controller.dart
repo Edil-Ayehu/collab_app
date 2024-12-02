@@ -16,6 +16,7 @@ class ProjectDetailsController extends GetxController {
   final members = <Map<String, dynamic>>[].obs;
   final isLoading = false.obs;
   final taskFilter = 'all'.obs;
+  final selectedFilter = 'all'.obs;
 
   // Controllers for editing project
   final nameController = TextEditingController();
@@ -74,7 +75,8 @@ class ProjectDetailsController extends GetxController {
           .where('projectId', isEqualTo: project.value?.id)
           .get();
 
-      tasks.value = snapshot.docs.map((doc) => Task.fromFirestore(doc)).toList();
+      tasks.value =
+          snapshot.docs.map((doc) => Task.fromFirestore(doc)).toList();
       filterTasks(taskFilter.value);
     } catch (e) {
       Get.snackbar(
@@ -89,7 +91,8 @@ class ProjectDetailsController extends GetxController {
     try {
       members.clear();
       for (final memberId in project.value?.members ?? []) {
-        final userDoc = await _firestore.collection('users').doc(memberId).get();
+        final userDoc =
+            await _firestore.collection('users').doc(memberId).get();
         if (userDoc.exists) {
           members.add({
             'uid': memberId,
@@ -109,14 +112,15 @@ class ProjectDetailsController extends GetxController {
 
   void filterTasks(String? filter) {
     if (filter != null) {
+      selectedFilter.value = filter;
       taskFilter.value = filter;
     }
-    
-    if (taskFilter.value == 'all') {
+
+    if (selectedFilter.value == 'all') {
       filteredTasks.value = tasks;
     } else {
       filteredTasks.value =
-          tasks.where((task) => task.status == taskFilter.value).toList();
+          tasks.where((task) => task.status == selectedFilter.value).toList();
     }
   }
 
@@ -363,4 +367,4 @@ class ProjectDetailsController extends GetxController {
       isLoading.value = false;
     }
   }
-} 
+}

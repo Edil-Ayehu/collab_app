@@ -13,11 +13,11 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
         title: Obx(() => Text(controller.project.value?.name ?? '')),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_rounded),
             onPressed: () => _showEditProjectDialog(context),
           ),
           IconButton(
-            icon: const Icon(Icons.people),
+            icon: const Icon(Icons.people_rounded),
             onPressed: () => _showMembersDialog(context),
           ),
         ],
@@ -27,10 +27,12 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
           return const Center(child: CircularProgressIndicator());
         }
         return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildProjectInfo(),
+              const SizedBox(height: 24),
               _buildTaskSection(),
             ],
           ),
@@ -38,7 +40,10 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
       }),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTaskDialog(context),
-        child: const Icon(Icons.add_task),
+        backgroundColor: Colors.teal,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(Icons.add_task_rounded),
       ),
     );
   }
@@ -49,6 +54,8 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
 
     return Card(
       margin: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -141,53 +148,52 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Tasks',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Tasks',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
               ),
-              DropdownButton<String>(
-                value: controller.taskFilter.value,
-                items: const [
-                  DropdownMenuItem(value: 'all', child: Text('All')),
-                  DropdownMenuItem(value: 'todo', child: Text('To Do')),
-                  DropdownMenuItem(
-                      value: 'in_progress', child: Text('In Progress')),
-                  DropdownMenuItem(value: 'completed', child: Text('Completed')),
-                ],
-                onChanged: controller.filterTasks,
-              ),
-            ],
-          ),
+            ),
+            _buildTaskFilter(),
+          ],
         ),
+        const SizedBox(height: 16),
         Obx(() => ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: controller.filteredTasks.length,
               itemBuilder: (context, index) {
-                return _buildTaskItem(controller.filteredTasks[index]);
+                final task = controller.filteredTasks[index];
+                return _buildTaskCard(task);
               },
             )),
       ],
     );
   }
 
-  Widget _buildTaskItem(Task task) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  Widget _buildTaskCard(Task task) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Checkbox(
           value: task.status == 'completed',
           onChanged: (value) => controller.updateTaskStatus(
             task,
             value! ? 'completed' : 'todo',
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
           ),
         ),
         title: Text(
@@ -196,14 +202,66 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
             decoration: task.status == 'completed'
                 ? TextDecoration.lineThrough
                 : TextDecoration.none,
+            color: task.status == 'completed'
+                ? Colors.grey.shade400
+                : Colors.grey.shade800,
           ),
         ),
-        subtitle: Text(controller.formatDate(task.dueDate)),
+        subtitle: Row(
+          children: [
+            Icon(
+              Icons.calendar_today_rounded,
+              size: 14,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              controller.formatDate(task.dueDate),
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
         trailing: IconButton(
-          icon: const Icon(Icons.more_vert),
+          icon: const Icon(Icons.more_vert_rounded),
           onPressed: () => _showTaskOptions(task),
         ),
         onTap: () => Get.toNamed('/task/${task.id}'),
+      ),
+    );
+  }
+
+  Widget _buildTaskFilter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: Obx(() => DropdownButton<String>(
+              value: controller.selectedFilter.value,
+              icon: Icon(Icons.filter_list_rounded, color: Colors.grey.shade600),
+              style: TextStyle(color: Colors.grey.shade800, fontSize: 14),
+              isDense: true,
+              items: [
+                'all',
+                'todo',
+                'in_progress',
+                'completed',
+              ].map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(
+                    value == 'all' ? 'All Tasks' : value.replaceAll('_', ' ').capitalize!,
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) => controller.selectedFilter.value = value!,
+            )),
       ),
     );
   }
@@ -233,6 +291,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Project'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -257,7 +316,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
                 subtitle: Obx(() => Text(
                       controller.formatDate(controller.selectedDeadline.value),
                     )),
-                trailing: const Icon(Icons.calendar_today),
+                trailing: const Icon(Icons.calendar_today_rounded),
                 onTap: () => controller.pickDate(context),
               ),
             ],
@@ -273,6 +332,17 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
               controller.updateProject();
               Get.back();
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+            ),
             child: const Text('Save'),
           ),
         ],
@@ -285,6 +355,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Project Members'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: SizedBox(
           width: double.maxFinite,
           child: Column(
@@ -294,7 +365,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
                 controller: controller.emailController,
                 decoration: const InputDecoration(
                   labelText: 'Add member by email',
-                  suffixIcon: Icon(Icons.person_add),
+                  suffixIcon: Icon(Icons.person_add_rounded),
                 ),
               ),
               const SizedBox(height: 16),
@@ -306,13 +377,14 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
                         final member = controller.members[index];
                         return ListTile(
                           leading: const CircleAvatar(
-                            child: Icon(Icons.person),
+                            child: Icon(Icons.person_rounded),
                           ),
                           title: Text(member['email'] ?? ''),
                           trailing: IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
-                            onPressed: () =>
-                                controller.removeMember(member['uid'] as String),
+                            icon:
+                                const Icon(Icons.remove_circle_outline_rounded),
+                            onPressed: () => controller
+                                .removeMember(member['uid'] as String),
                           ),
                         );
                       },
@@ -331,6 +403,17 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
               controller.addMember();
               controller.emailController.clear();
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+            ),
             child: const Text('Add Member'),
           ),
         ],
@@ -350,7 +433,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.edit),
+              leading: const Icon(Icons.edit_rounded),
               title: const Text('Edit Task'),
               onTap: () {
                 Get.back();
@@ -358,8 +441,9 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Delete Task', style: TextStyle(color: Colors.red)),
+              leading: const Icon(Icons.delete_rounded, color: Colors.red),
+              title: const Text('Delete Task',
+                  style: TextStyle(color: Colors.red)),
               onTap: () {
                 Get.back();
                 controller.deleteTask(task);
@@ -376,6 +460,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('New Task'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -398,9 +483,10 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
               ListTile(
                 title: const Text('Due Date'),
                 subtitle: Obx(() => Text(
-                      controller.formatDate(controller.selectedTaskDueDate.value),
+                      controller
+                          .formatDate(controller.selectedTaskDueDate.value),
                     )),
-                trailing: const Icon(Icons.calendar_today),
+                trailing: const Icon(Icons.calendar_today_rounded),
                 onTap: () => controller.pickTaskDate(context),
               ),
             ],
@@ -416,10 +502,65 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
               controller.createTask();
               Get.back();
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+            ),
             child: const Text('Create'),
           ),
         ],
       ),
     );
   }
-} 
+
+  Widget _buildStatusChip(String status) {
+    Color color = _getStatusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        status.replaceAll('_', ' ').toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMembersChip(int count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.teal.shade50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.people_rounded, size: 16, color: Colors.teal.shade400),
+          const SizedBox(width: 4),
+          Text(
+            '$count members',
+            style: TextStyle(
+              color: Colors.teal.shade700,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
