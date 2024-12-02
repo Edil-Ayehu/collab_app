@@ -114,13 +114,12 @@ class ProjectDetailsController extends GetxController {
     if (filter != null) {
       selectedFilter.value = filter;
       taskFilter.value = filter;
-    }
-
-    if (selectedFilter.value == 'all') {
-      filteredTasks.value = tasks;
-    } else {
-      filteredTasks.value =
-          tasks.where((task) => task.status == selectedFilter.value).toList();
+    
+      if (filter == 'all') {
+        filteredTasks.value = tasks;
+      } else {
+        filteredTasks.value = tasks.where((task) => task.status == filter).toList();
+      }
     }
   }
 

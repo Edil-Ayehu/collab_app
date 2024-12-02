@@ -260,7 +260,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
                   ),
                 );
               }).toList(),
-              onChanged: (value) => controller.selectedFilter.value = value!,
+              onChanged: (value) => controller.filterTasks(value),
             )),
       ),
     );
