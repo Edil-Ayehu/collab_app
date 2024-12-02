@@ -61,25 +61,21 @@ class ProjectController extends GetxController {
 
       final project = Project(
         id: '',
-        name: nameController.text,
-        description: descriptionController.text,
+        name: nameController.text.trim(),
+        description: descriptionController.text.trim(),
         deadline: selectedDeadline.value,
-        status: 'pending',
-        members: [userId],
-        createdBy: userId,
         createdAt: DateTime.now(),
+        createdBy: userId,
+        members: [userId],
       );
 
-      await _firestore
-          .collection('projects')
-          .add(project.toFirestore());
+      final docRef = await _firestore.collection('projects').add(project.toFirestore());
+      
+      // Update the project with the generated ID
+      await docRef.update({'id': docRef.id});
+      
+      await loadProjects();
 
-      nameController.clear();
-      descriptionController.clear();
-      selectedDeadline.value = DateTime.now().add(const Duration(days: 7));
-      
-      loadProjects();
-      
       Get.snackbar(
         'Success',
         'Project created successfully',
@@ -89,6 +85,50 @@ class ProjectController extends GetxController {
       Get.snackbar(
         'Error',
         'Failed to create project',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> updateProject(String projectId) async {
+    try {
+      await _firestore.collection('projects').doc(projectId).update({
+        'name': nameController.text.trim(),
+        'description': descriptionController.text.trim(),
+        'deadline': Timestamp.fromDate(selectedDeadline.value),
+      });
+
+      await loadProjects();
+
+      Get.snackbar(
+        'Success',
+        'Project updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to update project',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> deleteProject(String projectId) async {
+    try {
+      await _firestore.collection('projects').doc(projectId).delete();
+      
+      await loadProjects();
+
+      Get.snackbar(
+        'Success',
+        'Project deleted successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to delete project',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -113,5 +153,27 @@ class ProjectController extends GetxController {
   void openProjectDetails(Project project) {
     // TODO: Implement project details view
     Get.toNamed('/project/${project.id}');
+  }
+
+  Future<void> updateProjectStatus(String projectId, String status) async {
+    try {
+      await _firestore.collection('projects').doc(projectId).update({
+        'status': status,
+      });
+
+      await loadProjects();
+
+      Get.snackbar(
+        'Success',
+        'Project status updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to update project status',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
   }
 } 

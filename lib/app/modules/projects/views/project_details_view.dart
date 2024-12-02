@@ -57,6 +57,38 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                const Text(
+                  'Status',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                DropdownButton<String>(
+                  value: project.status,
+                  items: ['pending', 'in progress', 'completed']
+                      .map((status) => DropdownMenuItem(
+                            value: status,
+                            child: Text(
+                              status.capitalize!,
+                              style: TextStyle(
+                                color: _getStatusColor(status),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      controller.updateProjectStatus(project.id, value);
+                    }
+                  },
+                ),
+              ],
+            ),
+            const Divider(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

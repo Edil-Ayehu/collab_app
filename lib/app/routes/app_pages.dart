@@ -4,16 +4,17 @@ import '../modules/auth/views/auth_view.dart';
 import '../modules/auth/views/register_view.dart';
 import '../modules/dashboard/bindings/dashboard_binding.dart';
 import '../modules/dashboard/views/dashboard_view.dart';
-import '../modules/projects/bindings/project_binding.dart';
 import '../modules/projects/views/project_view.dart';
 import '../modules/projects/views/project_details_view.dart';
 import '../modules/projects/controllers/project_details_controller.dart';
+import '../modules/projects/controllers/project_controller.dart';
 import '../modules/tasks/bindings/task_binding.dart';
 import '../modules/tasks/views/task_view.dart';
 import '../modules/tasks/views/task_details_view.dart';
 import '../modules/tasks/controllers/task_details_controller.dart';
 import '../modules/profile/views/profile_view.dart';
 import '../modules/profile/controllers/profile_controller.dart';
+import '../modules/projects/bindings/project_binding.dart';
 
 part 'app_routes.dart';
 

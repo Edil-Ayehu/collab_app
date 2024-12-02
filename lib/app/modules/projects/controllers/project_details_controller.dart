@@ -322,4 +322,45 @@ class ProjectDetailsController extends GetxController {
   String formatDate(DateTime date) {
     return DateFormat('MMM dd, yyyy').format(date);
   }
+
+  Future<void> updateProjectStatus(String projectId, String status) async {
+    try {
+      await _firestore.collection('projects').doc(projectId).update({
+        'status': status,
+      });
+
+      // Optionally reload the project details
+      await loadProjectDetails(projectId);
+
+      Get.snackbar(
+        'Success',
+        'Project status updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to update project status',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> loadProjectDetails(String projectId) async {
+    isLoading.value = true;
+    try {
+      final doc = await _firestore.collection('projects').doc(projectId).get();
+      if (doc.exists) {
+        project.value = Project.fromFirestore(doc);
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to load project details',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
 } 
