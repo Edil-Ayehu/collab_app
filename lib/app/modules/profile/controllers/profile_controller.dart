@@ -14,18 +14,26 @@ class ProfileController extends GetxController {
 
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
+  final emailController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
-    loadUserProfile();
+    loadUserData();
   }
 
   @override
   void onClose() {
     nameController.dispose();
     phoneController.dispose();
+    emailController.dispose();
     super.onClose();
+  }
+
+  void loadUserData() {
+    nameController.text = 'John Doe';
+    phoneController.text = '+1234567890';
+    emailController.text = 'john.doe@example.com';
   }
 
   Future<void> loadUserProfile() async {
@@ -39,6 +47,7 @@ class ProfileController extends GetxController {
         user.value = UserModel.fromFirestore(doc);
         nameController.text = user.value?.name ?? '';
         phoneController.text = user.value?.phone ?? '';
+        emailController.text = user.value?.email ?? '';
       }
     } catch (e) {
       Get.snackbar(
@@ -53,12 +62,14 @@ class ProfileController extends GetxController {
 
   Future<void> updateProfile() async {
     try {
+      isLoading.value = true;
       final userId = _auth.currentUser?.uid;
       if (userId == null) return;
 
       await _firestore.collection('users').doc(userId).update({
         'name': nameController.text.trim(),
         'phone': phoneController.text.trim(),
+        'email': emailController.text.trim(),
       });
 
       await loadUserProfile();
@@ -67,13 +78,19 @@ class ProfileController extends GetxController {
         'Success',
         'Profile updated successfully',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.teal.shade50,
+        colorText: Colors.teal.shade800,
       );
     } catch (e) {
       Get.snackbar(
         'Error',
         'Failed to update profile',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade50,
+        colorText: Colors.red.shade800,
       );
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -90,4 +107,4 @@ class ProfileController extends GetxController {
     if (date == null) return '';
     return DateFormat('MMMM dd, yyyy').format(date);
   }
-} 
+}

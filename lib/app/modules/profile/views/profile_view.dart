@@ -10,184 +10,221 @@ class ProfileView extends GetView<ProfileController> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => _showEditProfileDialog(context),
-          ),
-        ],
+        centerTitle: true,
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              _buildProfileHeader(),
-              const SizedBox(height: 24),
-              _buildProfileInfo(),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildProfileHeader() {
-    return Center(
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 60,
-                backgroundImage: controller.user.value?.photoUrl != null
-                    ? NetworkImage(controller.user.value!.photoUrl!)
-                    : null,
-                child: controller.user.value?.photoUrl == null
-                    ? const Icon(Icons.person, size: 60)
-                    : null,
-              ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.teal,
-                  child: IconButton(
-                    icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                    onPressed: controller.updateProfilePhoto,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            controller.user.value?.name ?? '',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            controller.user.value?.email ?? '',
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileInfo() {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _buildInfoTile(
-              icon: Icons.phone,
-              title: 'Phone',
-              value: controller.user.value?.phone ?? '',
-            ),
-            const Divider(),
-            _buildInfoTile(
-              icon: Icons.calendar_today,
-              title: 'Member Since',
-              value: controller.formatDate(controller.user.value?.createdAt),
-            ),
+            _buildProfileHeader(),
+            const SizedBox(height: 40),
+            _buildProfileForm(),
+            const SizedBox(height: 32),
+            _buildSaveButton(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoTile({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.teal),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+  Widget _buildProfileHeader() {
+    return Column(
+      children: [
+        Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.teal.shade100,
+                  width: 2,
                 ),
               ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.teal.shade50,
+                child: Icon(
+                  Icons.person_rounded,
+                  size: 50,
+                  color: Colors.teal.shade300,
                 ),
               ),
-            ],
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade200,
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.camera_alt_rounded,
+                  size: 20,
+                  color: Colors.teal.shade300,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Edit Profile',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade800,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Future<void> _showEditProfileDialog(BuildContext context) {
-    return showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: controller.nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'Enter your name',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller.phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  hintText: 'Enter your phone number',
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-            ],
+  Widget _buildProfileForm() {
+    return Column(
+      children: [
+        _buildTextField(
+          controller: controller.nameController,
+          label: 'Full Name',
+          hint: 'Enter your name',
+          icon: Icons.person_outline_rounded,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: controller.phoneController,
+          label: 'Phone Number',
+          hint: 'Enter your phone number',
+          icon: Icons.phone_rounded,
+          keyboardType: TextInputType.phone,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: controller.emailController,
+          label: 'Email',
+          hint: 'Enter your email',
+          icon: Icons.email_rounded,
+          keyboardType: TextInputType.emailAddress,
+          enabled: false,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    bool enabled = true,
+  }) {
+    return TextField(
+      controller: controller,
+      enabled: enabled,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(
+          icon,
+          color: Colors.teal.shade300,
+          size: 22,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1,
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1,
           ),
-          ElevatedButton(
-            onPressed: () {
-              controller.updateProfile();
-              Get.back();
-            },
-            child: const Text('Save'),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.teal.shade300,
+            width: 1.5,
           ),
-        ],
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
+        ),
+        filled: true,
+        fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
+        floatingLabelStyle: TextStyle(
+          color: Colors.teal.shade300,
+          fontSize: 14,
+        ),
+        labelStyle: TextStyle(
+          color: Colors.grey.shade600,
+          fontSize: 14,
+        ),
+        hintStyle: TextStyle(
+          color: Colors.grey.shade400,
+          fontSize: 14,
+        ),
       ),
+      style: TextStyle(
+        color: Colors.grey.shade800,
+        fontSize: 15,
+      ),
+      cursorColor: Colors.teal.shade300,
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: Obx(() => ElevatedButton(
+            onPressed: controller.isLoading.value ? null : controller.updateProfile,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: controller.isLoading.value
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Save Changes',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+          )),
     );
   }
 } 
