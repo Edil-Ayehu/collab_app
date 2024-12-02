@@ -11,6 +11,7 @@ class TaskView extends GetView<TaskController> {
     return Scaffold(
       body: Column(
         children: [
+          _buildTaskHeader(),
           _buildTaskFilter(),
           Expanded(
             child: Obx(() => controller.isLoading.value
@@ -21,7 +22,34 @@ class TaskView extends GetView<TaskController> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTaskDialog(context),
+        backgroundColor: Colors.teal,
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildTaskHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'My Tasks',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Obx(() => Text(
+                '${controller.tasks.length} tasks',
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                ),
+              )),
+        ],
       ),
     );
   }
@@ -223,7 +251,8 @@ class TaskView extends GetView<TaskController> {
                   DropdownMenuItem(value: 2, child: Text('High')),
                   DropdownMenuItem(value: 3, child: Text('Urgent')),
                 ],
-                onChanged: (value) => controller.selectedPriority.value = value!,
+                onChanged: (value) =>
+                    controller.selectedPriority.value = value!,
               ),
             ],
           ),
@@ -244,4 +273,4 @@ class TaskView extends GetView<TaskController> {
       ),
     );
   }
-} 
+}

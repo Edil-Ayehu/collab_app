@@ -7,7 +7,6 @@ import '../modules/dashboard/views/dashboard_view.dart';
 import '../modules/projects/views/project_view.dart';
 import '../modules/projects/views/project_details_view.dart';
 import '../modules/projects/controllers/project_details_controller.dart';
-import '../modules/projects/controllers/project_controller.dart';
 import '../modules/tasks/bindings/task_binding.dart';
 import '../modules/tasks/views/task_view.dart';
 import '../modules/tasks/views/task_details_view.dart';
