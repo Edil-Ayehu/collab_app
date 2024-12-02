@@ -14,6 +14,7 @@ import '../modules/tasks/controllers/task_details_controller.dart';
 import '../modules/profile/views/profile_view.dart';
 import '../modules/profile/controllers/profile_controller.dart';
 import '../modules/projects/bindings/project_binding.dart';
+import '../middleware/auth_middleware.dart';
 
 part 'app_routes.dart';
 
@@ -37,6 +38,7 @@ class AppPages {
       name: Routes.dashboard,
       page: () => const DashboardView(),
       binding: DashboardBinding(),
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.projects,

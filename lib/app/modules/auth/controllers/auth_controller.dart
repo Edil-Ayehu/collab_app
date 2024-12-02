@@ -16,6 +16,7 @@ class AuthController extends GetxController {
   final confirmPasswordController = TextEditingController();
 
   final isLoading = false.obs;
+  final isLoggedIn = false.obs;
 
   @override
   void onClose() {
@@ -25,6 +26,24 @@ class AuthController extends GetxController {
     phoneController.dispose();
     confirmPasswordController.dispose();
     super.onClose();
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    checkAuthStatus();
+  }
+
+  void checkAuthStatus() {
+    _auth.authStateChanges().listen((User? user) {
+      if (user != null) {
+        isLoggedIn.value = true;
+        Get.offAllNamed(Routes.dashboard);
+      } else {
+        isLoggedIn.value = false;
+        Get.offAllNamed(Routes.auth);
+      }
+    });
   }
 
   Future<void> signIn() async {
