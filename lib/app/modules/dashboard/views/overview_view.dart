@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/dashboard_controller.dart';
+import '../../projects/controllers/project_controller.dart';
+import '../../tasks/controllers/task_controller.dart';
+import 'package:intl/intl.dart';
 
 class OverviewView extends GetView<DashboardController> {
   const OverviewView({super.key});
+
+  ProjectController get projectController => Get.find<ProjectController>();
+  TaskController get taskController => Get.find<TaskController>();
 
   @override
   Widget build(BuildContext context) {
@@ -20,19 +26,25 @@ class OverviewView extends GetView<DashboardController> {
             ),
           ),
           const SizedBox(height: 24),
-          _buildStatCard(
-            title: 'Active Projects',
-            value: '5',
-            icon: Icons.folder,
-            color: Colors.blue,
-          ),
+          Obx(() => _buildStatCard(
+                title: 'Active Projects',
+                value: projectController.projects
+                    .where((p) => p.status != 'completed')
+                    .length
+                    .toString(),
+                icon: Icons.folder,
+                color: Colors.blue,
+              )),
           const SizedBox(height: 16),
-          _buildStatCard(
-            title: 'Pending Tasks',
-            value: '12',
-            icon: Icons.task,
-            color: Colors.orange,
-          ),
+          Obx(() => _buildStatCard(
+                title: 'Pending Tasks',
+                value: taskController.tasks
+                    .where((t) => t.status != 'completed')
+                    .length
+                    .toString(),
+                icon: Icons.task,
+                color: Colors.orange,
+              )),
           const SizedBox(height: 24),
           const Text(
             'Recent Activity',
@@ -88,21 +100,74 @@ class OverviewView extends GetView<DashboardController> {
 
   Widget _buildActivityList() {
     return Card(
-      child: ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: const CircleAvatar(
-              child: Icon(Icons.person),
-            ),
-            title: Text('Activity ${index + 1}'),
-            subtitle: Text('Description for activity ${index + 1}'),
-            trailing: Text('${index + 1}h ago'),
-          );
-        },
-      ),
+      child: Obx(() {
+        final recentProjects = projectController.projects
+            .take(3)
+            .map((p) => _buildActivityItem(
+                  'Project Created',
+                  p.name,
+                  p.createdAt,
+                  Icons.folder,
+                  Colors.blue,
+                ))
+            .toList();
+
+        final recentTasks = taskController.tasks
+            .take(3)
+            .map((t) => _buildActivityItem(
+                  'Task Added',
+                  t.title,
+                  t.createdAt,
+                  Icons.task,
+                  Colors.orange,
+                ))
+            .toList();
+
+        final allActivities = [...recentProjects, ...recentTasks]
+          ..sort((a, b) => b.key.toString().compareTo(a.key.toString()));
+
+        return ListView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: allActivities.take(5).toList(),
+        );
+      }),
     );
+  }
+
+  Widget _buildActivityItem(
+    String action,
+    String title,
+    DateTime timestamp,
+    IconData icon,
+    Color color,
+  ) {
+    final timeAgo = _getTimeAgo(timestamp);
+    
+    return ListTile(
+      key: Key(timestamp.toString()),
+      leading: CircleAvatar(
+        backgroundColor: color.withOpacity(0.1),
+        child: Icon(icon, color: color),
+      ),
+      title: Text(title),
+      subtitle: Text(action),
+      trailing: Text(timeAgo),
+    );
+  }
+
+  String _getTimeAgo(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
   }
 } 
