@@ -12,6 +12,8 @@ import '../modules/tasks/bindings/task_binding.dart';
 import '../modules/tasks/views/task_view.dart';
 import '../modules/tasks/views/task_details_view.dart';
 import '../modules/tasks/controllers/task_details_controller.dart';
+import '../modules/profile/views/profile_view.dart';
+import '../modules/profile/controllers/profile_controller.dart';
 
 part 'app_routes.dart';
 
@@ -58,6 +60,13 @@ class AppPages {
       page: () => const TaskDetailsView(),
       binding: BindingsBuilder(() {
         Get.lazyPut(() => TaskDetailsController());
+      }),
+    ),
+    GetPage(
+      name: Routes.profile,
+      page: () => const ProfileView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut(() => ProfileController());
       }),
     ),
   ];

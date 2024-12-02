@@ -24,7 +24,7 @@ class SettingsView extends GetView<DashboardController> {
             _buildSettingTile(
               title: 'Profile',
               icon: Icons.person,
-              onTap: () {},
+              onTap: () => Get.toNamed('/profile'),
             ),
             _buildSettingTile(
               title: 'Notifications',

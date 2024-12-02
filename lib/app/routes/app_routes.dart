@@ -11,4 +11,5 @@ abstract class Routes {
   static const tasks = '/tasks';
   static const taskDetails = '/task/:id';
   static const settings = '/settings';
+  static const profile = '/profile';
 } 
