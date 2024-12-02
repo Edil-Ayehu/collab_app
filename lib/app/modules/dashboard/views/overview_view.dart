@@ -149,7 +149,7 @@ class OverviewView extends GetView<DashboardController> {
         final recentTasks = taskController.tasks
             .take(3)
             .map((t) => _buildActivityItem(
-                  'Task Added',
+                  'Task Created',
                   t.title,
                   t.createdAt,
                   Icons.task_rounded,
@@ -223,6 +223,23 @@ class OverviewView extends GetView<DashboardController> {
           color: Colors.grey.shade500,
         ),
       ),
+      onTap: () {
+        if (action == 'Project Created') {
+          final project = projectController.projects.firstWhereOrNull(
+            (p) => p.name == title,
+          );
+          if (project != null) {
+            Get.toNamed('/project/${project.id}');
+          }
+        } else if (action == 'Task Created') {
+          final task = taskController.tasks.firstWhereOrNull(
+            (t) => t.title == title,
+          );
+          if (task != null) {
+            Get.toNamed('/task/${task.id}');
+          }
+        }
+      },
     );
   }
 
