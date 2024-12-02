@@ -19,7 +19,7 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadUserData();
+    loadUserProfile();
   }
 
   @override
@@ -30,17 +30,14 @@ class ProfileController extends GetxController {
     super.onClose();
   }
 
-  void loadUserData() {
-    nameController.text = 'John Doe';
-    phoneController.text = '+1234567890';
-    emailController.text = 'john.doe@example.com';
-  }
-
   Future<void> loadUserProfile() async {
     isLoading.value = true;
     try {
       final userId = _auth.currentUser?.uid;
-      if (userId == null) return;
+      if (userId == null) {
+        Get.offAllNamed('/login');
+        return;
+      }
 
       final doc = await _firestore.collection('users').doc(userId).get();
       if (doc.exists) {
@@ -48,12 +45,22 @@ class ProfileController extends GetxController {
         nameController.text = user.value?.name ?? '';
         phoneController.text = user.value?.phone ?? '';
         emailController.text = user.value?.email ?? '';
+      } else {
+        Get.snackbar(
+          'Error',
+          'User profile not found',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.shade50,
+          colorText: Colors.red.shade800,
+        );
       }
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Failed to load profile',
+        'Failed to load profile: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade50,
+        colorText: Colors.red.shade800,
       );
     } finally {
       isLoading.value = false;
