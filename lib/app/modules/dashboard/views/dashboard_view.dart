@@ -50,14 +50,19 @@ class DashboardView extends GetView<DashboardController> {
                       index: 1,
                     ),
                     _buildNavItem(
+                      icon: Icons.calendar_today_rounded,
+                      label: 'Calendar',
+                      index: 2,
+                    ),
+                    _buildNavItem(
                       icon: Icons.task_rounded,
                       label: 'Tasks',
-                      index: 2,
+                      index: 3,
                     ),
                     _buildNavItem(
                       icon: Icons.settings_rounded,
                       label: 'Settings',
-                      index: 3,
+                      index: 4,
                     ),
                   ],
                 ),

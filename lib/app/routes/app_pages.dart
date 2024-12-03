@@ -15,6 +15,8 @@ import '../modules/profile/views/profile_view.dart';
 import '../modules/profile/controllers/profile_controller.dart';
 import '../modules/projects/bindings/project_binding.dart';
 import '../middleware/auth_middleware.dart';
+import '../modules/calendar/bindings/calendar_binding.dart';
+import '../modules/calendar/views/calendar_view.dart';
 
 part 'app_routes.dart';
 
@@ -73,6 +75,11 @@ class AppPages {
       binding: BindingsBuilder(() {
         Get.lazyPut(() => ProfileController());
       }),
+    ),
+    GetPage(
+      name: '/calendar',
+      page: () => const CalendarView(),
+      binding: CalendarBinding(),
     ),
   ];
 } 

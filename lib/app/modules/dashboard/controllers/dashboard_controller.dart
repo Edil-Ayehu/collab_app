@@ -1,3 +1,4 @@
+import 'package:collab_app/app/modules/calendar/controllers/calendar_controller.dart';
 import 'package:collab_app/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ import '../../projects/views/project_view.dart';
 import '../../tasks/views/task_view.dart';
 import '../views/overview_view.dart';
 import '../views/settings_view.dart';
+import '../../calendar/views/calendar_view.dart';
 
 class DashboardController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -19,11 +21,13 @@ class DashboardController extends GetxController {
     // Initialize controllers
     Get.put(ProjectController());
     Get.put(TaskController());
+    Get.put(CalendarController());
   }
 
   final List<Widget> pages = [
     const OverviewView(),
     const ProjectView(),
+    const CalendarView(),
     const TaskView(),
     const SettingsView(),
   ];
