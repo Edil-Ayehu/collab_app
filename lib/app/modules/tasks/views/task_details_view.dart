@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/task_details_controller.dart';
+import 'package:intl/intl.dart';
 
 class TaskDetailsView extends GetView<TaskDetailsController> {
   const TaskDetailsView({super.key});
@@ -65,25 +66,28 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
           }),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTaskInfo(),
-              const SizedBox(height: 24),
-              _buildAssigneeSection(),
-              const SizedBox(height: 24),
-              _buildCommentsSection(),
-            ],
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 80),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTaskInfo(),
+                const SizedBox(height: 24),
+                _buildAssigneeSection(),
+                const SizedBox(height: 24),
+                _buildCommentsSection(),
+              ],
+            ),
           ),
-        );
-      }),
-      bottomNavigationBar: _buildCommentInput(),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: _buildCommentInput(),
+          ),
+        ],
+      ),
+      resizeToAvoidBottomInset: true,
     );
   }
 
@@ -258,21 +262,67 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
             leading: CircleAvatar(
               child: Text(userName[0].toUpperCase()),
             ),
-            title: Text(userName),
-            subtitle: RichText(
-              text: TextSpan(
-                children: _buildCommentTextSpans(commentText),
-                style: TextStyle(color: Colors.grey.shade800),
-              ),
+            title: Row(
+              children: [
+                Text(
+                  userName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _getFormattedTimestamp(timestamp),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.normal,
+                  ),
+                ),
+              ],
             ),
-            trailing: Text(
-              controller.formatDate(timestamp),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                RichText(
+                  text: TextSpan(
+                    children: _buildCommentTextSpans(commentText),
+                    style: TextStyle(
+                      color: Colors.grey.shade800,
+                      height: 1.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
             ),
           );
         },
       );
     });
+  }
+
+  String _getFormattedTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 365) {
+      return DateFormat('MMM d, yyyy, h:mm a').format(timestamp);
+    } else if (difference.inDays > 7) {
+      return DateFormat('MMM d, h:mm a').format(timestamp);
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
   }
 
   List<TextSpan> _buildCommentTextSpans(String commentText) {
@@ -303,7 +353,12 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
 
   Widget _buildCommentInput() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 8,
+        bottom: 8 + MediaQuery.of(Get.context!).viewPadding.bottom,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -320,7 +375,9 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
           Obx(() {
             if (controller.showMentionsList.value) {
               return Container(
-                constraints: const BoxConstraints(maxHeight: 200),
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(Get.context!).size.height * 0.3,
+                ),
                 margin: const EdgeInsets.only(bottom: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -359,15 +416,20 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                   controller: controller.commentController,
                   decoration: InputDecoration(
                     hintText: 'Add a comment...',
+                    hintStyle: TextStyle(color: Colors.grey.shade400),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
+                      horizontal: 20,
                       vertical: 12,
                     ),
                   ),
+                  maxLines: 4,
+                  minLines: 1,
                   onChanged: (value) {
                     final lastAtIndex = value.lastIndexOf('@');
                     if (lastAtIndex != -1 && lastAtIndex < value.length) {
