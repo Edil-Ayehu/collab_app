@@ -23,6 +23,10 @@ class TaskDetailsController extends GetxController {
   final commentController = TextEditingController();
   final selectedDueDate = DateTime.now().obs;
 
+  final mentionFilter = ''.obs;
+  final showMentionsList = false.obs;
+  final filteredMembers = <Map<String, dynamic>>[].obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -281,24 +285,43 @@ class TaskDetailsController extends GetxController {
 
   Future<void> addComment() async {
     try {
-      final taskId = task.value?.id;
       final userId = _auth.currentUser?.uid;
-      if (taskId == null || userId == null) return;
+      if (userId == null) return;
 
-      final comment = {
-        'text': commentController.text,
-        'userId': userId,
-        'timestamp': FieldValue.serverTimestamp(),
-      };
+      final commentText = commentController.text.trim();
+      if (commentText.isEmpty) return;
+
+      // Extract mentions from comment
+      final mentionedUsers = <String>{};
+      final regex = RegExp(r'@(\w+)');
+      final matches = regex.allMatches(commentText);
+      
+      for (final match in matches) {
+        final username = match.group(1);
+        if (username != null) {
+          final member = projectMembers.firstWhereOrNull(
+            (m) => m['name']?.toString() == username || 
+                   m['email']?.toString() == username
+          );
+          if (member != null) {
+            mentionedUsers.add(member['uid'] as String);
+          }
+        }
+      }
 
       await _firestore
           .collection('tasks')
-          .doc(taskId)
+          .doc(task.value?.id)
           .collection('comments')
-          .add(comment);
+          .add({
+        'text': commentText,
+        'userId': userId,
+        'timestamp': FieldValue.serverTimestamp(),
+        'mentions': mentionedUsers.toList(),
+      });
 
       commentController.clear();
-      await loadComments();
+      loadComments();
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -361,5 +384,39 @@ class TaskDetailsController extends GetxController {
         RolePermissions.hasPermission(currentUserRole.value, permission);
     print('Permission result: $hasPermission'); // Debug print
     return hasPermission;
+  }
+
+  void filterMembersForMention(String query) {
+    if (query.isEmpty) {
+      showMentionsList.value = false;
+      return;
+    }
+    
+    final searchText = query.toLowerCase();
+    filteredMembers.value = projectMembers
+        .where((member) => 
+          (member['name']?.toString().toLowerCase() ?? '')
+              .contains(searchText) ||
+          (member['email']?.toString().toLowerCase() ?? '')
+              .contains(searchText))
+        .toList();
+    
+    showMentionsList.value = true;
+  }
+
+  void selectMemberMention(Map<String, dynamic> member) {
+    final currentText = commentController.text;
+    final lastAtIndex = currentText.lastIndexOf('@');
+    
+    if (lastAtIndex != -1) {
+      final beforeMention = currentText.substring(0, lastAtIndex);
+      final memberName = member['name']?.toString() ?? member['email']?.toString() ?? '';
+      commentController.text = '$beforeMention@$memberName ';
+      commentController.selection = TextSelection.fromPosition(
+        TextPosition(offset: commentController.text.length),
+      );
+    }
+    
+    showMentionsList.value = false;
   }
 }

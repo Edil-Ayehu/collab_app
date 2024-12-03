@@ -290,54 +290,88 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
 
   Widget _buildCommentInput() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.grey.shade200,
             blurRadius: 10,
-            offset: const Offset(0, -4),
+            offset: const Offset(0, -5),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: TextField(
-              controller: controller.commentController,
-              decoration: InputDecoration(
-                hintText: 'Add a comment...',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
+          Obx(() {
+            if (controller.showMentionsList.value) {
+              return Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade200),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: controller.filteredMembers.length,
+                  itemBuilder: (context, index) {
+                    final member = controller.filteredMembers[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        child: Text(
+                          (member['name']?.toString() ?? 
+                           member['email']?.toString() ?? '?')[0].toUpperCase(),
+                        ),
+                      ),
+                      title: Text(
+                        member['name']?.toString() ?? 
+                        member['email']?.toString() ?? 'Unknown User'
+                      ),
+                      onTap: () => controller.selectMemberMention(member),
+                    );
+                  },
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.teal.shade300),
+              );
+            }
+            return const SizedBox();
+          }),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller.commentController,
+                  decoration: InputDecoration(
+                    hintText: 'Add a comment...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  onChanged: (value) {
+                    final lastAtIndex = value.lastIndexOf('@');
+                    if (lastAtIndex != -1 && lastAtIndex < value.length) {
+                      final query = value.substring(lastAtIndex + 1);
+                      controller.filterMembersForMention(query);
+                    } else {
+                      controller.showMentionsList.value = false;
+                    }
+                  },
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                filled: true,
-                fillColor: Colors.grey.shade50,
               ),
-              maxLines: null,
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            icon: Icon(
-              Icons.send_rounded,
-              color: Colors.teal.shade400,
-            ),
-            onPressed: controller.addComment,
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.send_rounded),
+                color: Colors.teal,
+                onPressed: controller.addComment,
+              ),
+            ],
           ),
         ],
       ),
