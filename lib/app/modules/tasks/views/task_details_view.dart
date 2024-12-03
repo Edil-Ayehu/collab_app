@@ -155,7 +155,8 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
             const SizedBox(height: 20),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 20, color: Colors.grey.shade400),
+                Icon(Icons.calendar_today,
+                    size: 20, color: Colors.grey.shade400),
                 const SizedBox(width: 8),
                 Text(
                   'Due: ${controller.formatDate(task.dueDate)}',
@@ -595,10 +596,10 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                   labelText: 'Priority',
                 ),
                 items: const [
-                  DropdownMenuItem(value: 0, child: Text('None')),
-                  DropdownMenuItem(value: 1, child: Text('Low')),
-                  DropdownMenuItem(value: 2, child: Text('Medium')),
-                  DropdownMenuItem(value: 3, child: Text('High')),
+                  DropdownMenuItem(value: 0, child: Text('Low')),
+                  DropdownMenuItem(value: 1, child: Text('Medium')),
+                  DropdownMenuItem(value: 2, child: Text('High')),
+                  DropdownMenuItem(value: 3, child: Text('Urgent')),
                 ],
                 onChanged: controller.updatePriority,
               ),
