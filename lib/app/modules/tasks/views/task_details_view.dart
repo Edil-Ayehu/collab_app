@@ -24,15 +24,19 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
           Obx(() {
             // Only show more options if user has necessary permissions
             final hasEditPermission = controller.hasPermission('edit_tasks');
-            final hasDeletePermission = controller.hasPermission('delete_tasks');
-            final hasAssignPermission = controller.hasPermission('assign_tasks');
-            
-            if (hasEditPermission || hasDeletePermission || hasAssignPermission) {
+            final hasDeletePermission =
+                controller.hasPermission('delete_tasks');
+            final hasAssignPermission =
+                controller.hasPermission('assign_tasks');
+
+            if (hasEditPermission ||
+                hasDeletePermission ||
+                hasAssignPermission) {
               return PopupMenuButton(
                 icon: const Icon(Icons.more_vert_rounded),
                 itemBuilder: (context) {
                   final items = <PopupMenuItem>[];
-                  
+
                   if (hasAssignPermission) {
                     items.add(
                       PopupMenuItem(
@@ -41,7 +45,7 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                       ),
                     );
                   }
-                  
+
                   if (hasDeletePermission) {
                     items.add(
                       PopupMenuItem(
@@ -52,7 +56,7 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                       ),
                     );
                   }
-                  
+
                   return items;
                 },
               );
@@ -205,12 +209,12 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
             ),
             const SizedBox(height: 8),
             Obx(() => ListTile(
-              leading: const CircleAvatar(
-                child: Icon(Icons.person),
-              ),
-              title: Text(controller.assigneeName.value),
-              contentPadding: EdgeInsets.zero,
-            )),
+                  leading: const CircleAvatar(
+                    child: Icon(Icons.person),
+                  ),
+                  title: Text(controller.assigneeName.value),
+                  contentPadding: EdgeInsets.zero,
+                )),
           ],
         ),
       );
@@ -230,62 +234,71 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
           ),
         ),
         const SizedBox(height: 16),
-        Obx(() => ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: controller.comments.length,
-              itemBuilder: (context, index) {
-                final comment = controller.comments[index];
-                return _buildCommentItem(comment);
-              },
-            )),
+        _buildCommentList(),
       ],
     );
   }
 
-  Widget _buildCommentItem(Map<String, dynamic> comment) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade100),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.teal.shade50,
-                child: Icon(Icons.person_rounded,
-                    size: 16, color: Colors.teal.shade300),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                comment['userName'] ?? 'Unknown User',
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const Spacer(),
-              Text(
-                controller.formatDate((comment['timestamp'] as DateTime)),
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            comment['text'] ?? '',
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              height: 1.5,
+  Widget _buildCommentList() {
+    return Obx(() {
+      if (controller.comments.isEmpty) {
+        return const Center(child: Text('No comments yet.'));
+      }
+
+      return ListView.builder(
+        shrinkWrap: true,
+        itemCount: controller.comments.length,
+        itemBuilder: (context, index) {
+          final comment = controller.comments[index];
+          final commentText = comment['text'] as String;
+          final userName = comment['userName'] as String;
+          final timestamp = comment['timestamp'] as DateTime;
+
+          return ListTile(
+            leading: CircleAvatar(
+              child: Text(userName[0].toUpperCase()),
             ),
-          ),
-        ],
-      ),
-    );
+            title: Text(userName),
+            subtitle: RichText(
+              text: TextSpan(
+                children: _buildCommentTextSpans(commentText),
+                style: TextStyle(color: Colors.grey.shade800),
+              ),
+            ),
+            trailing: Text(
+              controller.formatDate(timestamp),
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
+          );
+        },
+      );
+    });
+  }
+
+  List<TextSpan> _buildCommentTextSpans(String commentText) {
+    final regex = RegExp(r'(@\w+)');
+    final matches = regex.allMatches(commentText);
+    int lastMatchEnd = 0;
+    final spans = <TextSpan>[];
+
+    for (final match in matches) {
+      if (match.start > lastMatchEnd) {
+        spans.add(
+            TextSpan(text: commentText.substring(lastMatchEnd, match.start)));
+      }
+      spans.add(TextSpan(
+        text: match.group(0),
+        style:
+            TextStyle(color: Colors.blue.shade400, fontWeight: FontWeight.bold),
+      ));
+      lastMatchEnd = match.end;
+    }
+
+    if (lastMatchEnd < commentText.length) {
+      spans.add(TextSpan(text: commentText.substring(lastMatchEnd)));
+    }
+
+    return spans;
   }
 
   Widget _buildCommentInput() {
@@ -322,14 +335,15 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                     return ListTile(
                       leading: CircleAvatar(
                         child: Text(
-                          (member['name']?.toString() ?? 
-                           member['email']?.toString() ?? '?')[0].toUpperCase(),
+                          (member['name']?.toString() ??
+                                  member['email']?.toString() ??
+                                  '?')[0]
+                              .toUpperCase(),
                         ),
                       ),
-                      title: Text(
-                        member['name']?.toString() ?? 
-                        member['email']?.toString() ?? 'Unknown User'
-                      ),
+                      title: Text(member['name']?.toString() ??
+                          member['email']?.toString() ??
+                          'Unknown User'),
                       onTap: () => controller.selectMemberMention(member),
                     );
                   },
@@ -570,7 +584,7 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                 child: Text('No members available'),
               );
             }
-            
+
             return ListView.builder(
               shrinkWrap: true,
               itemCount: controller.projectMembers.length,
@@ -579,12 +593,14 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                 final assignedTasks = member['assignedTasks'] as int? ?? 0;
                 final taskLimit = member['taskLimit'] as int? ?? 5;
                 final isEnabled = assignedTasks < taskLimit;
-                
+
                 return ListTile(
                   leading: const CircleAvatar(
                     child: Icon(Icons.person),
                   ),
-                  title: Text(member['name']?.toString() ?? member['email']?.toString() ?? 'Unknown User'),
+                  title: Text(member['name']?.toString() ??
+                      member['email']?.toString() ??
+                      'Unknown User'),
                   subtitle: Text(
                     'Tasks: $assignedTasks/$taskLimit',
                     style: TextStyle(
@@ -592,10 +608,12 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                     ),
                   ),
                   enabled: isEnabled,
-                  onTap: isEnabled ? () {
-                    controller.updateAssignee(member['uid'] as String);
-                    Get.back();
-                  } : null,
+                  onTap: isEnabled
+                      ? () {
+                          controller.updateAssignee(member['uid'] as String);
+                          Get.back();
+                        }
+                      : null,
                 );
               },
             );
