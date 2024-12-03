@@ -106,42 +106,43 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
   }
 
   Widget _buildTaskInfo() {
-    final task = controller.task.value;
-    if (task == null) return const SizedBox();
+    return Obx(() {
+      final task = controller.task.value;
+      if (task == null) return const Center(child: CircularProgressIndicator());
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade100,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildStatusChip(task.status),
-              _buildPriorityIndicator(task.priority),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            task.title,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
+      return Container(
+        padding: const EdgeInsets.all(24),
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade100,
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          if (task.description.isNotEmpty) ...[
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildStatusChip(task.status),
+                _buildPriorityIndicator(task.priority),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              task.title,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
+            ),
             const SizedBox(height: 12),
             Text(
               task.description,
@@ -151,27 +152,24 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                 height: 1.5,
               ),
             ),
-          ],
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Icon(
-                Icons.calendar_today_rounded,
-                size: 20,
-                color: Colors.teal.shade300,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Due ${controller.formatDate(task.dueDate)}',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Icon(Icons.calendar_today, size: 20, color: Colors.grey.shade400),
+                const SizedBox(width: 8),
+                Text(
+                  'Due: ${controller.formatDate(task.dueDate)}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildAssigneeSection() {
