@@ -44,6 +44,8 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
             children: [
               _buildProjectInfo(),
               const SizedBox(height: 24),
+              _buildMembersSection(),
+              const SizedBox(height: 24),
               _buildTaskSection(),
             ],
           ),
@@ -168,6 +170,110 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMembersSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Team Members',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            if (controller.hasPermission('manage_members'))
+              IconButton(
+                icon: const Icon(Icons.person_add),
+                onPressed: () => _showAddMemberDialog(Get.context!),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Obx(() {
+          if (controller.members.isEmpty) {
+            return const Center(child: Text('No members yet'));
+          }
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: controller.members.length,
+            itemBuilder: (context, index) {
+              final member = controller.members[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.teal.shade100,
+                    child: Text(
+                      (member['name'] as String).isNotEmpty
+                          ? (member['name'] as String)[0].toUpperCase()
+                          : '?',
+                      style: TextStyle(color: Colors.teal.shade700),
+                    ),
+                  ),
+                  title: Text(member['name'] as String),
+                  subtitle: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          member['role'] as String,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getAvailabilityColor(
+                                  member['availabilityStatus'] as String)
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          member['availabilityStatus'] as String,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _getAvailabilityColor(
+                                member['availabilityStatus'] as String),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: Text(
+                    '${member['assignedTasks']}/${member['taskLimit']} tasks',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        }),
+      ],
     );
   }
 
