@@ -10,6 +10,7 @@ class RolePermissions {
       'assign_tasks': true,
       'comment': true,
       'view_all': true,
+       'change_status': true,  // Add this line
     },
     'admin': {
       'edit_project': true,
@@ -21,6 +22,7 @@ class RolePermissions {
       'assign_tasks': true,
       'comment': true,
       'view_all': true,
+       'change_status': true,  // Add this line
     },
     'member': {
       'edit_project': false,
@@ -32,6 +34,7 @@ class RolePermissions {
       'assign_tasks': false,
       'comment': true,
       'view_all': true,
+       'change_status': false,  // Add this line
     },
     'viewer': {
       'edit_project': false,
@@ -43,6 +46,7 @@ class RolePermissions {
       'assign_tasks': false,
       'comment': true,
       'view_all': true,
+       'change_status': false,  // Add this line
     },
   };
 

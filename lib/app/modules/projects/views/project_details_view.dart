@@ -106,11 +106,13 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
                             ),
                           ))
                       .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      controller.updateProjectStatus(project.id, value);
-                    }
-                  },
+                  onChanged: controller.hasPermission('change_status')
+                      ? (value) {
+                          if (value != null) {
+                            controller.updateProjectStatus(project.id, value);
+                          }
+                        }
+                      : null,
                 ),
               ],
             ),
