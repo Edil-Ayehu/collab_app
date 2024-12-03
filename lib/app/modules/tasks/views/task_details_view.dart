@@ -9,11 +9,13 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
         title: const Text('Task Details'),
         actions: [
           Obx(() {
-            // Only show edit icon if user has edit_tasks permission
             if (controller.hasPermission('edit_tasks')) {
               return IconButton(
                 icon: const Icon(Icons.edit_rounded),
@@ -23,7 +25,6 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
             return const SizedBox.shrink();
           }),
           Obx(() {
-            // Only show more options if user has necessary permissions
             final hasEditPermission = controller.hasPermission('edit_tasks');
             final hasDeletePermission =
                 controller.hasPermission('delete_tasks');
@@ -69,14 +70,14 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 80),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTaskInfo(),
-                const SizedBox(height: 24),
+                const Divider(height: 32),
                 _buildAssigneeSection(),
-                const SizedBox(height: 24),
+                const Divider(height: 32),
                 _buildCommentsSection(),
               ],
             ),
@@ -85,21 +86,6 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
             alignment: Alignment.bottomCenter,
             child: _buildCommentInput(),
           ),
-        ],
-      ),
-      resizeToAvoidBottomInset: true,
-    );
-  }
-
-  PopupMenuItem<String> _buildStatusMenuItem(
-      String value, String text, IconData icon) {
-    return PopupMenuItem(
-      value: value,
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: _getStatusColor(value)),
-          const SizedBox(width: 12),
-          Text(text),
         ],
       ),
     );
@@ -111,19 +97,7 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
       if (task == null) return const Center(child: CircularProgressIndicator());
 
       return Container(
-        padding: const EdgeInsets.all(24),
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade100,
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -134,13 +108,12 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                 _buildPriorityIndicator(task.priority),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               task.title,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
               ),
             ),
             const SizedBox(height: 12),
@@ -152,11 +125,11 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Icon(Icons.calendar_today,
-                    size: 20, color: Colors.grey.shade400),
+                    size: 18, color: Colors.grey.shade600),
                 const SizedBox(width: 8),
                 Text(
                   'Due: ${controller.formatDate(task.dueDate)}',
@@ -181,46 +154,27 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
       final canAssignTasks = controller.hasPermission('assign_tasks');
 
       return Container(
-        padding: const EdgeInsets.all(24),
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade100,
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                const Text(
                   'Assignee',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade800,
                   ),
                 ),
                 if (canAssignTasks)
                   TextButton.icon(
                     onPressed: () => _showAssigneeDialog(Get.context!),
-                    icon: Icon(
-                      Icons.edit,
-                      size: 16,
-                      color: Colors.teal.shade300,
-                    ),
-                    label: Text(
-                      'Change',
-                      style: TextStyle(
-                        color: Colors.teal.shade300,
-                      ),
+                    icon: const Icon(Icons.edit, size: 16),
+                    label: const Text('Change'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.teal,
                     ),
                   ),
               ],
@@ -232,7 +186,8 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                   backgroundColor: Colors.teal.shade50,
                   child: Icon(
                     Icons.person,
-                    color: Colors.teal.shade300,
+                    color: Colors.teal.shade700,
+                    size: 20,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -242,10 +197,9 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
                     children: [
                       Text(
                         controller.assigneeName.value,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade800,
                         ),
                       ),
                       if (controller.assigneeEmail.value.isNotEmpty)
@@ -393,135 +347,87 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
     return spans;
   }
 
-  Widget _buildCommentInput() {
-    return Container(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 8,
-        bottom: 8 + MediaQuery.of(Get.context!).viewPadding.bottom,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Obx(() {
-            if (controller.showMentionsList.value) {
-              return Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(Get.context!).size.height * 0.3,
-                ),
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: controller.filteredMembers.length,
-                  itemBuilder: (context, index) {
-                    final member = controller.filteredMembers[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        child: Text(
-                          (member['name']?.toString() ??
-                                  member['email']?.toString() ??
-                                  '?')[0]
-                              .toUpperCase(),
-                        ),
-                      ),
-                      title: Text(member['name']?.toString() ??
-                          member['email']?.toString() ??
-                          'Unknown User'),
-                      onTap: () => controller.selectMemberMention(member),
-                    );
-                  },
-                ),
-              );
-            }
-            return const SizedBox();
-          }),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller.commentController,
-                  decoration: InputDecoration(
-                    hintText: 'Add a comment...',
-                    hintStyle: TextStyle(color: Colors.grey.shade400),
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                  ),
-                  maxLines: 4,
-                  minLines: 1,
-                  onChanged: (value) {
-                    final lastAtIndex = value.lastIndexOf('@');
-                    if (lastAtIndex != -1 && lastAtIndex < value.length) {
-                      final query = value.substring(lastAtIndex + 1);
-                      controller.filterMembersForMention(query);
-                    } else {
-                      controller.showMentionsList.value = false;
-                    }
-                  },
-                ),
+Widget _buildCommentInput() {
+  return Container(
+    padding: EdgeInsets.only(
+      left: 16,
+      right: 16,
+      top: 8,
+      bottom: 8 + MediaQuery.of(Get.context!).viewPadding.bottom,
+    ),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border(top: BorderSide(color: Colors.grey.shade200)),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: controller.commentController,
+            decoration: InputDecoration(
+              hintText: 'Add a comment...',
+              hintStyle: TextStyle(color: Colors.grey.shade400),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade200),
               ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.send_rounded),
-                color: Colors.teal,
-                onPressed: controller.addComment,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade200),
               ),
-            ],
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.teal),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
+            maxLines: 4,
+            minLines: 1,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: const Icon(Icons.send_rounded),
+          color: Colors.teal,
+          onPressed: controller.addComment,
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildStatusChip(String status) {
     Color color;
     switch (status.toLowerCase()) {
       case 'completed':
-        color = Colors.green.shade400;
+        color = Colors.green;
         break;
       case 'in_progress':
-        color = Colors.blue.shade400;
+        color = Colors.blue;
         break;
       case 'todo':
-        color = Colors.orange.shade400;
+        color = Colors.orange;
         break;
       default:
-        color = Colors.grey.shade400;
+        color = Colors.grey;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         status.replaceAll('_', ' ').toUpperCase(),
         style: TextStyle(
-          color: color,
+          color: color.withOpacity(0.8),
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
@@ -537,22 +443,22 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
     switch (priority) {
       case 3:
         icon = Icons.flag_rounded;
-        color = Colors.red.shade400;
+        color = Colors.red;
         label = 'Urgent';
         break;
       case 2:
         icon = Icons.flag_rounded;
-        color = Colors.orange.shade400;
+        color = Colors.orange;
         label = 'High';
         break;
       case 1:
         icon = Icons.flag_rounded;
-        color = Colors.blue.shade400;
+        color = Colors.blue;
         label = 'Medium';
         break;
       default:
         icon = Icons.flag_outlined;
-        color = Colors.grey.shade400;
+        color = Colors.grey;
         label = 'Low';
     }
 
@@ -560,17 +466,18 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
+          Icon(icon, size: 14, color: color.withOpacity(0.8)),
           const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
-              color: color,
+              color: color.withOpacity(0.8),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
