@@ -398,14 +398,14 @@ class TaskDetailsController extends GetxController {
     
     final searchText = query.toLowerCase();
     filteredMembers.value = projectMembers
-        .where((member) => 
-          (member['name']?.toString().toLowerCase() ?? '')
-              .contains(searchText) ||
-          (member['email']?.toString().toLowerCase() ?? '')
-              .contains(searchText))
+        .where((member) {
+          final name = member['name']?.toString().toLowerCase() ?? '';
+          final email = member['email']?.toString().toLowerCase() ?? '';
+          return name.contains(searchText) || email.contains(searchText);
+        })
         .toList();
     
-    showMentionsList.value = true;
+    showMentionsList.value = filteredMembers.isNotEmpty;
   }
 
   void selectMemberMention(Map<String, dynamic> member) {
@@ -414,13 +414,20 @@ class TaskDetailsController extends GetxController {
     
     if (lastAtIndex != -1) {
       final beforeMention = currentText.substring(0, lastAtIndex);
+      final afterMention = currentText.substring(currentText.length);
       final memberName = member['name']?.toString() ?? member['email']?.toString() ?? '';
-      commentController.text = '$beforeMention@$memberName ';
+      
+      commentController.text = '$beforeMention@$memberName$afterMention ';
       commentController.selection = TextSelection.fromPosition(
         TextPosition(offset: commentController.text.length),
       );
     }
     
     showMentionsList.value = false;
+  }
+
+  void clearMentionSuggestions() {
+    showMentionsList.value = false;
+    filteredMembers.clear();
   }
 }

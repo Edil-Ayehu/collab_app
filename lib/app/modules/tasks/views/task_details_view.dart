@@ -348,56 +348,108 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
   }
 
 Widget _buildCommentInput() {
-  return Container(
-    padding: EdgeInsets.only(
-      left: 16,
-      right: 16,
-      top: 8,
-      bottom: 8 + MediaQuery.of(Get.context!).viewPadding.bottom,
-    ),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border(top: BorderSide(color: Colors.grey.shade200)),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: controller.commentController,
-            decoration: InputDecoration(
-              hintText: 'Add a comment...',
-              hintStyle: TextStyle(color: Colors.grey.shade400),
-              filled: true,
-              fillColor: Colors.grey.shade50,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Colors.teal),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      // Mention suggestions
+      Obx(() {
+        if (controller.showMentionsList.value) {
+          return Container(
+            constraints: const BoxConstraints(maxHeight: 200),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                top: BorderSide(color: Colors.grey.shade200),
+                bottom: BorderSide(color: Colors.grey.shade200),
               ),
             ),
-            maxLines: 4,
-            minLines: 1,
-          ),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: controller.filteredMembers.length,
+              itemBuilder: (context, index) {
+                final member = controller.filteredMembers[index];
+                return ListTile(
+                  dense: true,
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.teal.shade50,
+                    child: Text(
+                      (member['name']?.toString() ?? member['email']?.toString() ?? '?')[0].toUpperCase(),
+                      style: TextStyle(color: Colors.teal.shade700),
+                    ),
+                  ),
+                  title: Text(member['name']?.toString() ?? ''),
+                  subtitle: Text(member['email']?.toString() ?? ''),
+                  onTap: () => controller.selectMemberMention(member),
+                );
+              },
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      }),
+      // Comment input
+      Container(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 8,
+          bottom: 8 + MediaQuery.of(Get.context!).viewPadding.bottom,
         ),
-        const SizedBox(width: 8),
-        IconButton(
-          icon: const Icon(Icons.send_rounded),
-          color: Colors.teal,
-          onPressed: controller.addComment,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey.shade200)),
         ),
-      ],
-    ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller.commentController,
+                onChanged: (value) {
+                  // Check for @ mentions
+                  final lastAtIndex = value.lastIndexOf('@');
+                  if (lastAtIndex != -1) {
+                    final query = value.substring(lastAtIndex + 1);
+                    controller.filterMembersForMention(query);
+                  } else {
+                    controller.showMentionsList.value = false;
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Add a comment... Use @ to mention',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Colors.teal),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                maxLines: 4,
+                minLines: 1,
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.send_rounded),
+              color: Colors.teal,
+              onPressed: controller.addComment,
+            ),
+          ],
+        ),
+      ),
+    ],
   );
 }
 
