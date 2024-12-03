@@ -96,6 +96,7 @@ class ProjectDetailsController extends GetxController {
     try {
       members.clear();
       final membersList = project.value?.members ?? [];
+      final memberRoles = project.value?.memberRoles ?? {};
       final creatorId = project.value?.createdBy;
       
       // Load creator first
@@ -106,7 +107,7 @@ class ProjectDetailsController extends GetxController {
             'uid': creatorId,
             'email': creatorDoc.data()?['email'] ?? '',
             'name': creatorDoc.data()?['name'] ?? '',
-            'role': 'creator',  // Special role for creator
+            'role': 'creator',
             'availabilityStatus': creatorDoc.data()?['availabilityStatus'] ?? 'available',
             'taskLimit': creatorDoc.data()?['taskLimit'] ?? 5,
             'assignedTasks': creatorDoc.data()?['assignedTasks'] ?? 0,
@@ -115,16 +116,16 @@ class ProjectDetailsController extends GetxController {
         }
       }
 
-      // Load other members
+      // Load other members with their project-specific roles
       for (final memberId in membersList) {
-        if (memberId != creatorId) {  // Skip creator as they're already added
+        if (memberId != creatorId) {
           final userDoc = await _firestore.collection('users').doc(memberId).get();
           if (userDoc.exists) {
             members.add({
               'uid': memberId,
               'email': userDoc.data()?['email'] ?? '',
               'name': userDoc.data()?['name'] ?? '',
-              'role': userDoc.data()?['role'] ?? 'member',
+              'role': memberRoles[memberId] ?? 'member',
               'availabilityStatus': userDoc.data()?['availabilityStatus'] ?? 'available',
               'taskLimit': userDoc.data()?['taskLimit'] ?? 5,
               'assignedTasks': userDoc.data()?['assignedTasks'] ?? 0,
@@ -197,7 +198,6 @@ class ProjectDetailsController extends GetxController {
       final userId = userQuery.docs.first.id;
       final projectId = project.value?.id;
       
-      // Check if user is the creator
       if (userId == project.value?.createdBy) {
         Get.snackbar('Error', 'User is already the project creator');
         return;
@@ -205,18 +205,10 @@ class ProjectDetailsController extends GetxController {
 
       if (projectId == null) return;
 
+      // Update project with new member and their role
       await _firestore.collection('projects').doc(projectId).update({
         'members': FieldValue.arrayUnion([userId]),
-      });
-
-      await _firestore.collection('users').doc(userId).update({
-        'role': selectedRole.value,
-        'taskLimit': 5,
-        'assignedTasks': 0,
-        'contributions': {
-          'completed_tasks': 0,
-          'comments': 0,
-        },
+        'memberRoles.$userId': selectedRole.value,
       });
 
       emailController.clear();
@@ -420,9 +412,14 @@ class ProjectDetailsController extends GetxController {
 
   Future<void> updateMemberRole(String memberId, String newRole) async {
     try {
-      await _firestore.collection('users').doc(memberId).update({
-        'role': newRole,
+      final projectId = project.value?.id;
+      if (projectId == null) return;
+
+      // Update only the project-specific role
+      await _firestore.collection('projects').doc(projectId).update({
+        'memberRoles.$memberId': newRole,
       });
+
       await loadMembers();
       Get.snackbar('Success', 'Member role updated');
     } catch (e) {

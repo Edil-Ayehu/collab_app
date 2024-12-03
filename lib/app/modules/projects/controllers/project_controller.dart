@@ -67,6 +67,8 @@ class ProjectController extends GetxController {
         createdAt: DateTime.now(),
         createdBy: userId,
         members: [userId],
+        memberRoles: {userId: 'creator'},
+        status: 'ongoing',
       );
 
       final docRef = await _firestore.collection('projects').add(project.toFirestore());

@@ -74,7 +74,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
                 ),
                 DropdownButton<String>(
                   value: project.status,
-                  items: ['pending', 'in progress', 'completed']
+                  items: ['ongoing', 'in progress', 'completed']
                       .map((status) => DropdownMenuItem(
                             value: status,
                             child: Text(
@@ -321,7 +321,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
         return Colors.green;
       case 'in progress':
         return Colors.blue;
-      case 'pending':
+      case 'ongoing':
         return Colors.orange;
       default:
         return Colors.grey;

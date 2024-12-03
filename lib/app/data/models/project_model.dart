@@ -8,6 +8,7 @@ class Project {
   final DateTime createdAt;
   final String createdBy;
   final List<String> members;
+  final Map<String, String> memberRoles;
   final String status;
 
   Project({
@@ -18,7 +19,8 @@ class Project {
     required this.createdAt,
     required this.createdBy,
     required this.members,
-    this.status = 'in progress',
+    required this.memberRoles,
+    this.status = 'ongoing',
   });
 
   Map<String, dynamic> toFirestore() {
@@ -29,6 +31,7 @@ class Project {
       'createdAt': Timestamp.fromDate(createdAt),
       'createdBy': createdBy,
       'members': members,
+      'memberRoles': memberRoles,
       'status': status,
     };
   }
@@ -43,7 +46,8 @@ class Project {
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       createdBy: data['createdBy'] ?? '',
       members: List<String>.from(data['members'] ?? []),
-      status: data['status'] ?? 'in progress',
+      memberRoles: Map<String, String>.from(data['memberRoles'] ?? {}),
+      status: data['status'] ?? 'ongoing',
     );
   }
 
@@ -55,6 +59,7 @@ class Project {
     DateTime? createdAt,
     String? createdBy,
     List<String>? members,
+    Map<String, String>? memberRoles,
     String? status,
   }) {
     return Project(
@@ -65,6 +70,7 @@ class Project {
       createdAt: createdAt ?? this.createdAt,
       createdBy: createdBy ?? this.createdBy,
       members: members ?? this.members,
+      memberRoles: memberRoles ?? this.memberRoles,
       status: status ?? this.status,
     );
   }
