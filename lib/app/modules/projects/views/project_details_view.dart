@@ -12,14 +12,25 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
       appBar: AppBar(
         title: Obx(() => Text(controller.project.value?.name ?? '')),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_rounded),
-            onPressed: () => _showEditProjectDialog(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.people_rounded),
-            onPressed: () => _showMembersDialog(context),
-          ),
+          Obx(() {
+            final hasEditPermission = controller.hasPermission('edit_project');
+            final hasManageMembers = controller.hasPermission('manage_members');
+            
+            return Row(
+              children: [
+                if (hasEditPermission)
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => _showEditProjectDialog(context),
+                  ),
+                if (hasManageMembers)
+                  IconButton(
+                    icon: const Icon(Icons.person_add),
+                    onPressed: () => _showAddMemberDialog(context),
+                  ),
+              ],
+            );
+          }),
         ],
       ),
       body: Obx(() {
@@ -27,7 +38,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
           return const Center(child: CircularProgressIndicator());
         }
         return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -38,13 +49,23 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
           ),
         );
       }),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTaskDialog(context),
-        backgroundColor: Colors.teal,
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: const Icon(Icons.add_task_rounded),
-      ),
+      floatingActionButton: Obx(() {
+        final canCreateTasks = controller.hasPermission('create_tasks');
+        print('Can create tasks: $canCreateTasks'); // Debug print
+        print('Current user role: ${controller.currentUserRole.value}'); // Debug print
+        
+        return Visibility(
+          visible: canCreateTasks,
+          child: FloatingActionButton(
+            onPressed: () => _showAddTaskDialog(context),
+            backgroundColor: Colors.teal,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            child: const Icon(Icons.add_task_rounded),
+          ),
+        );
+      }),
     );
   }
 
@@ -270,10 +291,27 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.more_vert_rounded),
-          onPressed: () => _showTaskOptions(task),
-        ),
+        trailing: controller.hasPermission('edit_tasks')
+            ? PopupMenuButton<String>(
+                itemBuilder: (context) => [
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text('Edit'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text('Delete'),
+                  ),
+                ],
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    Get.toNamed('/task/${task.id}/edit');
+                  } else if (value == 'delete') {
+                    controller.deleteTask(task);
+                  }
+                },
+              )
+            : null,
         onTap: () => Get.toNamed('/task/${task.id}'),
       ),
     );
@@ -321,7 +359,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
         return Colors.green;
       case 'in progress':
         return Colors.blue;
-      case 'ongoing':
+      case 'pending':
         return Colors.orange;
       default:
         return Colors.grey;
@@ -706,6 +744,60 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddMemberDialog(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Add Member'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller.emailController,
+              decoration: const InputDecoration(
+                labelText: 'Member Email',
+                hintText: 'Enter member email',
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: controller.selectedRole.value,
+              decoration: const InputDecoration(
+                labelText: 'Role',
+              ),
+              items: ['admin', 'member', 'viewer']
+                  .map((role) => DropdownMenuItem(
+                        value: role,
+                        child: Text(role.capitalize!),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  controller.selectedRole.value = value;
+                }
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              controller.addMember();
+              Get.back();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+            ),
+            child: const Text('Add'),
           ),
         ],
       ),

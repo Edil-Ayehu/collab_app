@@ -36,10 +36,10 @@ class AuthController extends GetxController {
 
   void checkAuthStatus() {
     _auth.authStateChanges().listen((User? user) {
-      if (user != null) {
+      if (user != null && Get.currentRoute != Routes.dashboard) {
         isLoggedIn.value = true;
         Get.offAllNamed(Routes.dashboard);
-      } else {
+      } else if (user == null && !Get.currentRoute.contains(Routes.auth)) {
         isLoggedIn.value = false;
         Get.offAllNamed(Routes.auth);
       }

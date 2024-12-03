@@ -6,8 +6,11 @@ import '../routes/app_pages.dart';
 class AuthMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
-    return FirebaseAuth.instance.currentUser == null
-        ? const RouteSettings(name: Routes.auth)
-        : null;
+    if (FirebaseAuth.instance.currentUser == null && 
+        route != Routes.auth && 
+        route != Routes.register) {
+      return const RouteSettings(name: Routes.auth);
+    }
+    return null;
   }
 } 

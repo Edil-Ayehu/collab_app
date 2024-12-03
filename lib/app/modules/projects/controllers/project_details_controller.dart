@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/project_model.dart';
 import '../../../data/models/task_model.dart';
+import '../../../helpers/role_permissions.dart';
 
 class ProjectDetailsController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -34,10 +35,12 @@ class ProjectDetailsController extends GetxController {
   // Add new variables
   final selectedRole = 'member'.obs;
   final isAdmin = false.obs;
+  final currentUserRole = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
+    checkUserRole();
     checkAdminStatus();
     final projectId = Get.parameters['id'];
     if (projectId != null) {
@@ -60,6 +63,7 @@ class ProjectDetailsController extends GetxController {
     try {
       final doc = await _firestore.collection('projects').doc(projectId).get();
       project.value = Project.fromFirestore(doc);
+      await checkUserRole();
       await loadTasks();
       await loadMembers();
     } catch (e) {
@@ -437,5 +441,22 @@ class ProjectDetailsController extends GetxController {
     } catch (e) {
       Get.snackbar('Error', 'Failed to update task limit');
     }
+  }
+
+  Future<void> checkUserRole() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    if (userId == project.value?.createdBy) {
+      currentUserRole.value = 'creator';
+      print('Setting role as creator for user: $userId');
+    } else {
+      currentUserRole.value = project.value?.memberRoles[userId] ?? 'viewer';
+      print('Setting role as ${currentUserRole.value} for user: $userId');
+    }
+  }
+
+  bool hasPermission(String permission) {
+    return RolePermissions.hasPermission(currentUserRole.value, permission);
   }
 }

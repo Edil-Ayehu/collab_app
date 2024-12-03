@@ -28,6 +28,9 @@ class AppPages {
       name: Routes.auth,
       page: () => const AuthView(),
       binding: AuthBinding(),
+      middlewares: [
+        AuthMiddleware(),
+      ],
     ),
     GetPage(
       name: Routes.register,
