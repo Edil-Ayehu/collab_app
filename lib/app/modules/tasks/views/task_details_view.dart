@@ -9,30 +9,56 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Obx(() => Text(
-              controller.task.value?.title ?? '',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            )),
+        title: const Text('Task Details'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_rounded),
-            onPressed: () => _showEditTaskDialog(context),
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            onSelected: controller.updateTaskStatus,
-            itemBuilder: (context) => [
-              _buildStatusMenuItem(
-                  'todo', 'To Do', Icons.check_box_outline_blank_rounded),
-              _buildStatusMenuItem(
-                  'in_progress', 'In Progress', Icons.pending_rounded),
-              _buildStatusMenuItem(
-                  'completed', 'Completed', Icons.check_box_rounded),
-            ],
-          ),
+          Obx(() {
+            // Only show edit icon if user has edit_tasks permission
+            if (controller.hasPermission('edit_tasks')) {
+              return IconButton(
+                icon: const Icon(Icons.edit_rounded),
+                onPressed: () => _showEditTaskDialog(context),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+          Obx(() {
+            // Only show more options if user has necessary permissions
+            final hasEditPermission = controller.hasPermission('edit_tasks');
+            final hasDeletePermission = controller.hasPermission('delete_tasks');
+            final hasAssignPermission = controller.hasPermission('assign_tasks');
+            
+            if (hasEditPermission || hasDeletePermission || hasAssignPermission) {
+              return PopupMenuButton(
+                icon: const Icon(Icons.more_vert_rounded),
+                itemBuilder: (context) {
+                  final items = <PopupMenuItem>[];
+                  
+                  if (hasAssignPermission) {
+                    items.add(
+                      PopupMenuItem(
+                        child: const Text('Change Assignee'),
+                        onTap: () => _showAssigneeDialog(context),
+                      ),
+                    );
+                  }
+                  
+                  if (hasDeletePermission) {
+                    items.add(
+                      PopupMenuItem(
+                        child: const Text('Delete Task'),
+                        onTap: () {
+                          // Add delete task functionality
+                        },
+                      ),
+                    );
+                  }
+                  
+                  return items;
+                },
+              );
+            }
+            return const SizedBox.shrink();
+          }),
         ],
       ),
       body: Obx(() {
