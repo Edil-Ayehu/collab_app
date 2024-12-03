@@ -141,20 +141,54 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
   }
 
   Widget _buildAssigneeSection() {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: ListTile(
-        leading: const CircleAvatar(
-          child: Icon(Icons.person),
+    final task = controller.task.value;
+    if (task == null) return const SizedBox();
+
+    return Obx(() {
+      final canAssignTasks = controller.hasPermission('assign_tasks');
+      print('Can assign tasks: $canAssignTasks'); // Debug print
+      print('Current role: ${controller.currentUserRole.value}'); // Debug print
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
         ),
-        title: Obx(() => Text(controller.assigneeName.value)),
-        subtitle: const Text('Assignee'),
-        trailing: IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () => _showAssigneeDialog(Get.context!),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Assignee',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (canAssignTasks) // Only show if user has permission
+                  TextButton.icon(
+                    onPressed: () => _showAssigneeDialog(Get.context!),
+                    icon: const Icon(Icons.edit, size: 16),
+                    label: const Text('Change'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Obx(() => ListTile(
+              leading: const CircleAvatar(
+                child: Icon(Icons.person),
+              ),
+              title: Text(controller.assigneeName.value),
+              contentPadding: EdgeInsets.zero,
+            )),
+          ],
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildCommentsSection() {
@@ -455,29 +489,57 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
   }
 
   Future<void> _showAssigneeDialog(BuildContext context) async {
+    if (!controller.hasPermission('assign_tasks')) {
+      Get.snackbar(
+        'Error',
+        'You don\'t have permission to assign tasks',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Change Assignee'),
         content: SizedBox(
           width: double.maxFinite,
-          child: Obx(() => ListView.builder(
-                shrinkWrap: true,
-                itemCount: controller.projectMembers.length,
-                itemBuilder: (context, index) {
-                  final member = controller.projectMembers[index];
-                  return ListTile(
-                    leading: const CircleAvatar(
-                      child: Icon(Icons.person),
+          child: Obx(() {
+            if (controller.projectMembers.isEmpty) {
+              return const Center(
+                child: Text('No members available'),
+              );
+            }
+            
+            return ListView.builder(
+              shrinkWrap: true,
+              itemCount: controller.projectMembers.length,
+              itemBuilder: (context, index) {
+                final member = controller.projectMembers[index];
+                final assignedTasks = member['assignedTasks'] as int? ?? 0;
+                final taskLimit = member['taskLimit'] as int? ?? 5;
+                final isEnabled = assignedTasks < taskLimit;
+                
+                return ListTile(
+                  leading: const CircleAvatar(
+                    child: Icon(Icons.person),
+                  ),
+                  title: Text(member['name']?.toString() ?? member['email']?.toString() ?? 'Unknown User'),
+                  subtitle: Text(
+                    'Tasks: $assignedTasks/$taskLimit',
+                    style: TextStyle(
+                      color: isEnabled ? Colors.grey : Colors.red,
                     ),
-                    title: Text(member['name'] ?? member['email'] ?? ''),
-                    onTap: () {
-                      controller.updateAssignee(member['uid'] as String);
-                      Get.back();
-                    },
-                  );
-                },
-              )),
+                  ),
+                  enabled: isEnabled,
+                  onTap: isEnabled ? () {
+                    controller.updateAssignee(member['uid'] as String);
+                    Get.back();
+                  } : null,
+                );
+              },
+            );
+          }),
         ),
         actions: [
           TextButton(

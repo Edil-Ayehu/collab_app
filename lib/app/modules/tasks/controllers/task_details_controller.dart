@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/task_model.dart';
+import '../../../helpers/role_permissions.dart';
 
 class TaskDetailsController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -14,6 +15,7 @@ class TaskDetailsController extends GetxController {
   final projectMembers = <Map<String, dynamic>>[].obs;
   final assigneeName = ''.obs;
   final isLoading = false.obs;
+  final currentUserRole = ''.obs;
 
   // Controllers for editing
   final titleController = TextEditingController();
@@ -24,10 +26,10 @@ class TaskDetailsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final taskId = Get.parameters['id'];
-    if (taskId != null) {
-      loadTask(taskId);
-    }
+    loadTaskDetails().then((_) {
+      checkUserRole();
+      loadProjectMembers();
+    });
   }
 
   @override
@@ -38,15 +40,17 @@ class TaskDetailsController extends GetxController {
     super.onClose();
   }
 
-  Future<void> loadTask(String taskId) async {
+  Future<void> loadTaskDetails() async {
     isLoading.value = true;
     try {
-      final doc = await _firestore.collection('tasks').doc(taskId).get();
-      task.value = Task.fromFirestore(doc);
-      
-      await loadComments();
-      await loadProjectMembers();
-      await loadAssigneeName();
+      final taskId = Get.parameters['id'];
+      if (taskId != null) {
+        final doc = await _firestore.collection('tasks').doc(taskId).get();
+        task.value = Task.fromFirestore(doc);
+
+        await loadComments();
+        await loadAssigneeName();
+      }
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -74,7 +78,7 @@ class TaskDetailsController extends GetxController {
               .collection('users')
               .doc(data['userId'] as String)
               .get();
-          
+
           return {
             ...data,
             'id': doc.id,
@@ -100,22 +104,40 @@ class TaskDetailsController extends GetxController {
           .get();
 
       final memberIds = List<String>.from(projectDoc.data()?['members'] ?? []);
-      
+
+      // Get all tasks to count assignments
+      final tasksSnapshot = await _firestore
+          .collection('tasks')
+          .where('projectId', isEqualTo: task.value?.projectId)
+          .get();
+
+      // Count tasks per member
+      final taskCounts = <String, int>{};
+      for (var taskDoc in tasksSnapshot.docs) {
+        final assigneeId = taskDoc.data()['assignedTo'] as String?;
+        if (assigneeId != null) {
+          taskCounts[assigneeId] = (taskCounts[assigneeId] ?? 0) + 1;
+        }
+      }
+
       projectMembers.value = await Future.wait(
         memberIds.map((memberId) async {
-          final userDoc = await _firestore
-              .collection('users')
-              .doc(memberId)
-              .get();
-          
+          final userDoc =
+              await _firestore.collection('users').doc(memberId).get();
+
+          final userData = userDoc.data() ?? {};
           return {
             'uid': memberId,
-            'email': userDoc.data()?['email'] ?? '',
-            'name': userDoc.data()?['name'] ?? '',
+            'email': userData['email'] ?? '',
+            'name': userData['name'] ?? '',
+            'taskLimit':
+                userData['taskLimit'] ?? 5, // Default limit of 5 if not set
+            'assignedTasks': taskCounts[memberId] ?? 0,
           };
         }).toList(),
       );
     } catch (e) {
+      print('Error loading project members: $e'); // Debug print
       Get.snackbar(
         'Error',
         'Failed to load project members',
@@ -126,16 +148,27 @@ class TaskDetailsController extends GetxController {
 
   Future<void> loadAssigneeName() async {
     try {
-      final assigneeId = task.value?.assignedTo;
-      if (assigneeId == null) return;
+      final assigneeId = task.value?.assigneeId;
+      if (assigneeId == null) {
+        assigneeName.value = 'Unassigned'; // Default value when no assignee
+        return;
+      }
 
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(assigneeId)
-          .get();
+      final userDoc =
+          await _firestore.collection('users').doc(assigneeId).get();
 
-      assigneeName.value = userDoc.data()?['name'] ?? 'Unknown User';
+      if (userDoc.exists) {
+        assigneeName.value = userDoc.data()?['name'] ??
+            userDoc.data()?['email'] ??
+            'Unknown User';
+      } else {
+        assigneeName.value = 'Unknown User';
+      }
+
+      print('Loaded assignee name: ${assigneeName.value}'); // Debug print
     } catch (e) {
+      print('Error loading assignee name: $e'); // Debug print
+      assigneeName.value = 'Error loading assignee';
       Get.snackbar(
         'Error',
         'Failed to load assignee name',
@@ -155,7 +188,7 @@ class TaskDetailsController extends GetxController {
         'dueDate': Timestamp.fromDate(selectedDueDate.value),
       });
 
-      await loadTask(taskId);
+      await loadTaskDetails();
 
       Get.snackbar(
         'Success',
@@ -180,7 +213,7 @@ class TaskDetailsController extends GetxController {
         'status': newStatus,
       });
 
-      await loadTask(taskId);
+      await loadTaskDetails();
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -199,7 +232,7 @@ class TaskDetailsController extends GetxController {
         'priority': newPriority,
       });
 
-      await loadTask(taskId);
+      await loadTaskDetails();
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -210,25 +243,37 @@ class TaskDetailsController extends GetxController {
   }
 
   Future<void> updateAssignee(String newAssigneeId) async {
+    print('Current user role: ${currentUserRole.value}'); // Debug print
+    if (!hasPermission('assign_tasks')) {
+      Get.snackbar(
+        'Error',
+        'You don\'t have permission to assign tasks',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     try {
       final taskId = task.value?.id;
       if (taskId == null) return;
 
       await _firestore.collection('tasks').doc(taskId).update({
-        'assignedTo': newAssigneeId,
+        'assigneeId':
+            newAssigneeId, // Make sure this matches with loadAssigneeName
+        'lastUpdated': FieldValue.serverTimestamp(),
       });
 
-      await loadTask(taskId);
-
+      await loadTaskDetails(); // This will reload assignee name
       Get.snackbar(
         'Success',
-        'Task assignee updated',
+        'Task assigned successfully',
         snackPosition: SnackPosition.BOTTOM,
       );
     } catch (e) {
+      print('Error assigning task: $e'); // Debug print
       Get.snackbar(
         'Error',
-        'Failed to update assignee',
+        'Failed to assign task',
         snackPosition: SnackPosition.BOTTOM,
       );
     }
@@ -278,4 +323,43 @@ class TaskDetailsController extends GetxController {
   String formatDate(DateTime date) {
     return DateFormat('MMM dd, yyyy').format(date);
   }
-} 
+
+  Future<void> checkUserRole() async {
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) return;
+
+      final projectDoc = await _firestore
+          .collection('projects')
+          .doc(task.value?.projectId)
+          .get();
+
+      if (projectDoc.exists) {
+        // Check if user is the project creator
+        if (userId == projectDoc.data()?['createdBy']) {
+          currentUserRole.value = 'creator';
+          print('User is creator: $userId'); // Debug print
+        } else {
+          // If not creator, get role from memberRoles
+          final memberRoles =
+              projectDoc.data()?['memberRoles'] as Map<String, dynamic>?;
+          currentUserRole.value = memberRoles?[userId] ?? 'viewer';
+          print(
+              'User role from memberRoles: ${currentUserRole.value}'); // Debug print
+        }
+      }
+    } catch (e) {
+      print('Error checking user role: $e');
+      currentUserRole.value = 'viewer'; // Default to viewer on error
+    }
+  }
+
+  bool hasPermission(String permission) {
+    print(
+        'Checking permission: $permission for role: ${currentUserRole.value}'); // Debug print
+    final hasPermission =
+        RolePermissions.hasPermission(currentUserRole.value, permission);
+    print('Permission result: $hasPermission'); // Debug print
+    return hasPermission;
+  }
+}

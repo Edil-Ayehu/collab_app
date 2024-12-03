@@ -263,7 +263,7 @@ class ProjectDetailsController extends GetxController {
         description: taskDescriptionController.text,
         dueDate: selectedTaskDueDate.value,
         status: 'todo',
-        assignedTo: userId,
+        assigneeId: userId,
         createdBy: userId,
         createdAt: DateTime.now(),
         priority: 0,

@@ -2,12 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Task {
   final String id;
-  final String projectId;
   final String title;
   final String description;
   final DateTime dueDate;
   final String status;
-  final String assignedTo;
+  final String projectId;
+  final String? assigneeId;
   final String createdBy;
   final DateTime createdAt;
   final int priority;
@@ -16,12 +16,12 @@ class Task {
 
   Task({
     required this.id,
-    required this.projectId,
     required this.title,
     required this.description,
     required this.dueDate,
     required this.status,
-    required this.assignedTo,
+    required this.projectId,
+    this.assigneeId,
     required this.createdBy,
     required this.createdAt,
     required this.priority,
@@ -33,12 +33,12 @@ class Task {
     final data = doc.data() as Map<String, dynamic>;
     return Task(
       id: doc.id,
-      projectId: data['projectId'] ?? '',
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       dueDate: (data['dueDate'] as Timestamp).toDate(),
       status: data['status'] ?? 'todo',
-      assignedTo: data['assignedTo'] ?? '',
+      projectId: data['projectId'] ?? '',
+      assigneeId: data['assigneeId'],
       createdBy: data['createdBy'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       priority: data['priority'] ?? 0,
@@ -54,7 +54,7 @@ class Task {
       'description': description,
       'dueDate': Timestamp.fromDate(dueDate),
       'status': status,
-      'assignedTo': assignedTo,
+      'assigneeId': assigneeId,
       'createdBy': createdBy,
       'createdAt': Timestamp.fromDate(createdAt),
       'priority': priority,

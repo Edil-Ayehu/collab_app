@@ -42,7 +42,7 @@ class TaskController extends GetxController {
 
       final snapshot = await _firestore
           .collection('tasks')
-          .where('assignedTo', isEqualTo: userId)
+          .where('assigneeId', isEqualTo: userId)
           .get();
 
       tasks.value = snapshot.docs
@@ -73,7 +73,7 @@ class TaskController extends GetxController {
         description: descriptionController.text,
         dueDate: selectedDueDate.value,
         status: 'todo',
-        assignedTo: userId,
+        assigneeId: userId,
         createdBy: userId,
         createdAt: DateTime.now(),
         priority: selectedPriority.value,
