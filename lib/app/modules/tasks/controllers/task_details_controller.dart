@@ -14,6 +14,7 @@ class TaskDetailsController extends GetxController {
   final comments = <Map<String, dynamic>>[].obs;
   final projectMembers = <Map<String, dynamic>>[].obs;
   final assigneeName = ''.obs;
+  final assigneeEmail = ''.obs;
   final isLoading = false.obs;
   final currentUserRole = ''.obs;
 
@@ -154,28 +155,31 @@ class TaskDetailsController extends GetxController {
     try {
       final assigneeId = task.value?.assigneeId;
       if (assigneeId == null) {
-        assigneeName.value = 'Unassigned'; // Default value when no assignee
+        assigneeName.value = 'Unassigned';
+        assigneeEmail.value = '';
         return;
       }
 
-      final userDoc =
-          await _firestore.collection('users').doc(assigneeId).get();
+      final userDoc = await _firestore.collection('users').doc(assigneeId).get();
 
       if (userDoc.exists) {
-        assigneeName.value = userDoc.data()?['name'] ??
-            userDoc.data()?['email'] ??
-            'Unknown User';
+        final userData = userDoc.data() ?? {};
+        assigneeName.value = userData['name'] ?? 'Unknown User';
+        assigneeEmail.value = userData['email'] ?? '';
       } else {
         assigneeName.value = 'Unknown User';
+        assigneeEmail.value = '';
       }
 
       print('Loaded assignee name: ${assigneeName.value}'); // Debug print
+      print('Loaded assignee email: ${assigneeEmail.value}'); // Debug print
     } catch (e) {
-      print('Error loading assignee name: $e'); // Debug print
+      print('Error loading assignee details: $e'); // Debug print
       assigneeName.value = 'Error loading assignee';
+      assigneeEmail.value = '';
       Get.snackbar(
         'Error',
-        'Failed to load assignee name',
+        'Failed to load assignee details',
         snackPosition: SnackPosition.BOTTOM,
       );
     }

@@ -174,20 +174,25 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
   }
 
   Widget _buildAssigneeSection() {
-    final task = controller.task.value;
-    if (task == null) return const SizedBox();
-
     return Obx(() {
+      final task = controller.task.value;
+      if (task == null) return const SizedBox();
+
       final canAssignTasks = controller.hasPermission('assign_tasks');
-      print('Can assign tasks: $canAssignTasks'); // Debug print
-      print('Current role: ${controller.currentUserRole.value}'); // Debug print
 
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
+        margin: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade100,
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,29 +200,67 @@ class TaskDetailsView extends GetView<TaskDetailsController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Assignee',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
                   ),
                 ),
-                if (canAssignTasks) // Only show if user has permission
+                if (canAssignTasks)
                   TextButton.icon(
                     onPressed: () => _showAssigneeDialog(Get.context!),
-                    icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Change'),
+                    icon: Icon(
+                      Icons.edit,
+                      size: 16,
+                      color: Colors.teal.shade300,
+                    ),
+                    label: Text(
+                      'Change',
+                      style: TextStyle(
+                        color: Colors.teal.shade300,
+                      ),
+                    ),
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            Obx(() => ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.person),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.teal.shade50,
+                  child: Icon(
+                    Icons.person,
+                    color: Colors.teal.shade300,
                   ),
-                  title: Text(controller.assigneeName.value),
-                  contentPadding: EdgeInsets.zero,
-                )),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        controller.assigneeName.value,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                      if (controller.assigneeEmail.value.isNotEmpty)
+                        Text(
+                          controller.assigneeEmail.value,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       );
