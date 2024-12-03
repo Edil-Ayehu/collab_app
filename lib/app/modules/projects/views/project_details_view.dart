@@ -15,7 +15,7 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
           Obx(() {
             final hasEditPermission = controller.hasPermission('edit_project');
             final hasManageMembers = controller.hasPermission('manage_members');
-            
+
             return Row(
               children: [
                 if (hasEditPermission)
@@ -52,16 +52,17 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
       floatingActionButton: Obx(() {
         final canCreateTasks = controller.hasPermission('create_tasks');
         print('Can create tasks: $canCreateTasks'); // Debug print
-        print('Current user role: ${controller.currentUserRole.value}'); // Debug print
-        
+        print(
+            'Current user role: ${controller.currentUserRole.value}'); // Debug print
+
         return Visibility(
           visible: canCreateTasks,
           child: FloatingActionButton(
             onPressed: () => _showAddTaskDialog(context),
             backgroundColor: Colors.teal,
             elevation: 0,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: const Icon(Icons.add_task_rounded),
           ),
         );
@@ -246,6 +247,9 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
   }
 
   Widget _buildTaskCard(Task task) {
+    final bool canEdit = controller.hasPermission('edit_tasks');
+    final bool canDelete = controller.hasPermission('delete_tasks');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -257,10 +261,12 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Checkbox(
           value: task.status == 'completed',
-          onChanged: (value) => controller.updateTaskStatus(
-            task,
-            value! ? 'completed' : 'todo',
-          ),
+          onChanged: controller.hasPermission('change_status')
+              ? (value) => controller.updateTaskStatus(
+                    task,
+                    value! ? 'completed' : 'todo',
+                  )
+              : null, // Disable checkbox if no permission
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(4),
           ),
@@ -293,27 +299,38 @@ class ProjectDetailsView extends GetView<ProjectDetailsController> {
             ),
           ],
         ),
-        trailing: controller.hasPermission('edit_tasks')
+        trailing: (canEdit || canDelete)
             ? PopupMenuButton<String>(
                 itemBuilder: (context) => [
-                  const PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Text('Edit'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Text('Delete'),
-                  ),
+                  if (canEdit)
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: ListTile(
+                        leading: Icon(Icons.edit_rounded),
+                        title: Text('Edit'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  if (canDelete)
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: ListTile(
+                        leading: Icon(Icons.delete_rounded, color: Colors.red),
+                        title:
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
                 ],
                 onSelected: (value) {
-                  if (value == 'edit') {
+                  if (value == 'edit' && canEdit) {
                     Get.toNamed('/task/${task.id}/edit');
-                  } else if (value == 'delete') {
+                  } else if (value == 'delete' && canDelete) {
                     controller.deleteTask(task);
                   }
                 },
               )
-            : null,
+            : null, // No menu for users without permissions
         onTap: () => Get.toNamed('/task/${task.id}'),
       ),
     );
