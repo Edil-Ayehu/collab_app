@@ -15,11 +15,13 @@ class ProjectController extends GetxController {
   final nameController = TextEditingController();
   final descriptionController = TextEditingController();
   final selectedDeadline = DateTime.now().add(const Duration(days: 7)).obs;
+  final userName = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     loadProjects();
+    loadUserName();
   }
 
   @override
@@ -176,6 +178,24 @@ class ProjectController extends GetxController {
         'Failed to update project status',
         snackPosition: SnackPosition.BOTTOM,
       );
+    }
+  }
+
+  Future<void> loadUserName() async {
+    try {
+      final userId = _auth.currentUser?.uid;
+      if (userId == null) return;
+
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        userName.value = userDoc.data()?['name'] ?? 'User';
+      }
+    } catch (e) {
+      print('Error loading user name: $e');
     }
   }
 } 

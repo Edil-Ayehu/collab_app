@@ -17,14 +17,25 @@ class OverviewView extends GetView<DashboardController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Welcome Back!',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
+          Obx(() => RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
+              children: [
+                const TextSpan(text: 'Welcome Back, '),
+                TextSpan(
+                  text: projectController.userName.value,
+                  style: TextStyle(
+                    color: Colors.teal.shade400,
+                  ),
+                ),
+                const TextSpan(text: '!'),
+              ],
             ),
-          ),
+          )),
           const SizedBox(height: 32),
           Row(
             children: [
