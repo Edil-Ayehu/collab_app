@@ -1,3 +1,4 @@
+import 'package:collab_app/app/modules/dashboard/views/theme_settings_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/dashboard_controller.dart';
@@ -53,7 +54,7 @@ class SettingsView extends GetView<DashboardController> {
                 title: 'Theme',
                 subtitle: 'Customize app appearance',
                 icon: Icons.palette_rounded,
-                onTap: () {},
+                onTap: () => Get.to(() => const ThemeSettingsView()),
               ),
               _buildSettingTile(
                 title: 'Language',
